@@ -1,0 +1,128 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+@import 'tailwindcss';
+
+@source "../../../components/**/*.vue";
+@source "../../../app/**/*.vue";
+
+@theme {
+  /* Бренд: olivine */
+  --color-olivine-50: #f4f9ec;
+  --color-olivine-100: #e6f0d7;
+  --color-olivine-200: #cee3b3;
+  --color-olivine-300: #afd185;
+  --color-olivine-400: #9ac26c;
+  --color-olivine-500: #73a141;
+  --color-olivine-600: #588030;
+  --color-olivine-700: #446229;
+  --color-olivine-800: #394f25;
+  --color-olivine-900: #324423;
+  --color-olivine-950: #18240f;
+
+  --radius-xl: calc(var(--radius-site) + 4px);
+  --radius-lg: var(--radius-site);
+  --radius-md: calc(var(--radius-site) - 2px);
+  --radius-sm: calc(var(--radius-site) - 4px);
+  --radius-xs: calc(var(--radius-site) - 6px);
+
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+
+  --animate-fade-in-up: fade-in-up 0.5s ease-out both;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 94 42% 44%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 88 35% 94%;
+    --secondary-foreground: 100 30% 18%;
+    --muted: 88 25% 95%;
+    --muted-foreground: 100 12% 38%;
+    --accent: 94 38% 48%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 88 18% 88%;
+    --input: 88 18% 88%;
+    --ring: 94 42% 44%;
+    --radius-site: 0.5rem;
+  }
+
+  *,
+  ::after,
+  ::before {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-white text-gray-900 antialiased;
+    font-family:
+      'Inter',
+      system-ui,
+      -apple-system,
+      sans-serif;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .writing-vertical {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+  }
+
+  .writing-vertical-lr {
+    writing-mode: vertical-lr;
+    text-orientation: mixed;
+  }
+
+  .animate-fadeInUp {
+    animation: fade-in-up 0.5s ease-out both;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f4f9ec;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #afd185;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9ac26c;
+}
+
+::selection {
+  background: rgba(154, 194, 108, 0.35);
+  color: #18240f;
+}
