@@ -2,7 +2,7 @@ module.exports = {
     apps: [
         {
             name: 'client-mamonov',
-            port: '3015',
+            port: '3012',
             script: '.output/server/index.mjs',
             exec_mode: 'fork',
             instances: 1,
