@@ -9,6 +9,7 @@ import {
 } from '~/composables/useSiteContent'
 import SiteSectionHero from "~/components/SiteSectionHero.vue";
 
+const route = useRoute()
 const contentApi = useContentApi()
 
 const { data: encSectionData } = await useAsyncData('site-encyclopedia-section', () => loadSiteEncyclopediaSection(), {
@@ -25,8 +26,18 @@ usePageSeo(es.seo, {
 })
 
 const posts = ref<Encyclopedia[]>([])
-/** 'all' или value из API (совпадает с encyclopedia.category) */
-const activeCategory = ref<string>('all')
+/** 'all' или value из API (`?c=`) — совпадает с encyclopedia.category */
+const activeCategory = computed(() => {
+  const raw = route.query.c
+  const s = Array.isArray(raw) ? raw[0] : raw
+  if (!s || s === 'all') return 'all'
+  const key = String(s)
+  const allowed = (encSection.value.categories?.length
+    ? encSection.value.categories
+    : defaultSiteEncyclopediaSection().categories
+  ).map((c) => c.value)
+  return allowed.includes(key) ? key : 'all'
+})
 const hoveredLocation = ref<string | null>(null)
 
 contentApi.fetchEncyclopedia().then((rows) => {
@@ -37,15 +48,25 @@ const categoryTabs = computed(() => {
   const list: SiteEncyclopediaCategoryItem[] = encSection.value.categories?.length
     ? encSection.value.categories
     : defaultSiteEncyclopediaSection().categories
-  return [
-    { value: 'all', label: 'ВСЕ', icon: 'i-heroicons-map-pin' },
-    ...list.map((c) => ({
-      value: c.value,
-      label: c.label,
-      icon: c.icon?.trim() || 'i-heroicons-tag',
-    })),
-  ]
+  return list.map((c) => ({
+    value: c.value,
+    label: c.label,
+    icon: c.icon?.trim() || 'i-heroicons-tag',
+  }))
 })
+
+const filterPillClass = (active: boolean) =>
+  [
+    'flex items-center gap-2 px-4 lg:px-6 py-2 rounded-full text-sm font-medium transition-all duration-300',
+    active
+      ? 'bg-olivine-500 text-white'
+      : 'bg-gray-100 text-gray-600 hover:bg-olivine-100 hover:text-olivine-700',
+  ]
+
+const isAllFilterActive = computed(
+  () => route.path === '/encyclopedia' && activeCategory.value === 'all',
+)
+const isMapNavActive = computed(() => route.path === '/encyclopedia/map')
 
 /** Только если category в записи пусто — подбор по тексту (редкий случай для старых данных). */
 function guessCategoryLegacy(e: Encyclopedia): string {
@@ -125,21 +146,33 @@ const breadcrumbs = [
     <section class="sticky top-16 lg:top-20 z-30 bg-white border-b border-gray-100">
       <div class="px-6 lg:px-12 py-4">
         <div class="flex flex-wrap gap-2 lg:gap-4 justify-center">
-          <button
+          <NuxtLink
+            to="/encyclopedia"
+            :class="filterPillClass(isAllFilterActive)"
+          >
+            <HeroUiIcon name="i-heroicons-map-pin" icon-class="w-4 h-4" />
+            <span class="hidden sm:inline">ВСЕ</span>
+          </NuxtLink>
+          <NuxtLink
+            to="/encyclopedia/map"
+            :class="filterPillClass(isMapNavActive)"
+          >
+            <HeroUiIcon name="i-heroicons-map" icon-class="w-4 h-4" />
+            <span class="hidden sm:inline">КАРТА</span>
+          </NuxtLink>
+          <NuxtLink
             v-for="category in categoryTabs"
             :key="category.value"
-            type="button"
-            :class="[
-              'flex items-center gap-2 px-4 lg:px-6 py-2 rounded-full text-sm font-medium transition-all duration-300',
-              activeCategory === category.value
-                ? 'bg-olivine-500 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-olivine-100 hover:text-olivine-700',
-            ]"
-            @click="activeCategory = category.value"
+            :to="{ path: '/encyclopedia', query: { c: category.value } }"
+            :class="
+              filterPillClass(
+                route.path === '/encyclopedia' && activeCategory === category.value,
+              )
+            "
           >
             <HeroUiIcon :name="category.icon" icon-class="w-4 h-4" />
             <span class="hidden sm:inline">{{ category.label }}</span>
-          </button>
+          </NuxtLink>
         </div>
       </div>
     </section>

@@ -1,3 +1,5 @@
+import type { MapLocation } from '~/interfaces/MapLocation'
+
 /**
  * Публичные материалы блога и энциклопедии с Laravel API.
  */
@@ -24,6 +26,19 @@ export function useContentApi() {
       if (Array.isArray(data)) return data as Record<string, unknown>[]
     }
     if (Array.isArray(root.data)) return root.data as Record<string, unknown>[]
+    return []
+  }
+
+  /** SuccessDto + JsonResource collection: `data` или `data.data`. */
+  function extractResourceArray(res: unknown): Record<string, unknown>[] {
+    if (!res || typeof res !== 'object') return []
+    const r = res as Record<string, unknown>
+    const d = r.data
+    if (Array.isArray(d)) return d as Record<string, unknown>[]
+    if (d && typeof d === 'object' && 'data' in d) {
+      const inner = (d as { data?: unknown }).data
+      if (Array.isArray(inner)) return inner as Record<string, unknown>[]
+    }
     return []
   }
 
@@ -75,6 +90,34 @@ export function useContentApi() {
         headers: { Accept: 'application/json' },
       })
     )
+  }
+
+  async function fetchMapLocations(): Promise<MapLocation[]> {
+    try {
+      const raw = extractResourceArray(
+        await $fetch(apiUrl('/map-locations'), {
+          headers: { Accept: 'application/json' },
+        })
+      )
+      return raw.map((row) => ({
+        id: Number(row.id),
+        title: String(row.title ?? ''),
+        latitude: Number(row.latitude),
+        longitude: Number(row.longitude),
+        encyclopedia_slug:
+          row.encyclopedia_slug === null || row.encyclopedia_slug === undefined
+            ? null
+            : String(row.encyclopedia_slug),
+        description:
+          row.description === null || row.description === undefined
+            ? null
+            : String(row.description),
+        sort_order: Number(row.sort_order ?? 0),
+        is_published: row.is_published === true,
+      }))
+    } catch {
+      return []
+    }
   }
 
   async function fetchEncyclopediaBySlug(slug: string) {
@@ -164,6 +207,7 @@ export function useContentApi() {
     fetchPosts,
     fetchPostBySlug,
     fetchEncyclopedia,
+    fetchMapLocations,
     fetchEncyclopediaBySlug,
     fetchSiteAbout,
     fetchSiteContacts,

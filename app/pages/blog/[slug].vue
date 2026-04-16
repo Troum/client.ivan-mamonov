@@ -5,7 +5,7 @@ import { useFilters } from '~/composables/useFilters'
 
 const nuxtApp = useNuxtApp()
 const route = useRoute()
-const { formatCoordinatesDecimal, shortenFormattedCoordinateDecimals } = useFilters()
+const { shortenFormattedCoordinateDecimals } = useFilters()
 
 const contentApi = useContentApi()
 
@@ -102,11 +102,8 @@ const coordPair = computed(() => {
   }
 })
 
-const coordLabel = computed(() => {
-  const pair = coordPair.value
-  if (pair) {
-    return formatCoordinatesDecimal({ lat: pair.lat, lng: pair.lng }, pair.latLabel, pair.lngLabel)
-  }
+const coordLabelFallback = computed(() => {
+  if (coordPair.value) return ''
   const c = (post.value as Post | null)?.coordinates
   if (c?.formatted?.trim()) return shortenFormattedCoordinateDecimals(c.formatted)
   return ''
@@ -144,16 +141,20 @@ const breadcrumbs = computed(() => {
         <div
           class="flex-1 flex flex-col justify-center px-6 lg:pl-24 lg:pr-16 py-24 lg:py-32 order-2 lg:order-1 relative"
         >
-          <div v-if="coordLabel" class="mb-6">
+          <div v-if="coordPair || coordLabelFallback" class="mb-6 w-full max-w-xl">
             <button
               v-if="coordPair"
               type="button"
-              class="font-mono text-sm text-gray-500 tracking-wider hover:text-olivine-600 text-left"
+              class="text-left w-full hover:opacity-90 transition-opacity"
               @click="openInMap(coordPair.lat, coordPair.lng)"
             >
-              {{ coordLabel }}
+              <CoordinatesDmsDisplay
+                variant="inline"
+                :latitude="coordPair.lat"
+                :longitude="coordPair.lng"
+              />
             </button>
-            <span v-else class="font-mono text-sm text-gray-500 tracking-wider">{{ coordLabel }}</span>
+            <span v-else class="font-mono text-sm text-gray-500 tracking-wider">{{ coordLabelFallback }}</span>
           </div>
 
           <h1

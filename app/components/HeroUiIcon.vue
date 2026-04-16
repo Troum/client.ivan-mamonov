@@ -11,6 +11,7 @@ import {
   EnvelopeIcon,
   GlobeAltIcon,
   HeartIcon,
+  MapIcon,
   MapPinIcon,
   PhoneIcon,
   TagIcon,
@@ -26,6 +27,7 @@ const props = defineProps<{
 const map: Record<string, Component> = {
   'i-heroicons-camera': CameraIcon,
   'i-heroicons-map-pin': MapPinIcon,
+  'i-heroicons-map': MapIcon,
   'i-heroicons-trophy': StarIcon,
   'i-heroicons-heart': HeartIcon,
   'i-heroicons-globe-alt': GlobeAltIcon,

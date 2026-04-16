@@ -8,7 +8,7 @@ import AppBreadcrumbs from "~/components/AppBreadcrumbs.vue";
 const nuxtApp = useNuxtApp()
 const route = useRoute()
 const runtimeConfig = useRuntimeConfig()
-const { formatCoordinatesDecimal, shortenFormattedCoordinateDecimals } = useFilters()
+const { shortenFormattedCoordinateDecimals } = useFilters()
 
 const hasMapboxToken = computed(() => {
   const t = runtimeConfig.public.mapbox?.accessToken
@@ -67,11 +67,9 @@ const coordPair = computed(() => {
   }
 })
 
-const coordLabel = computed(() => {
-  const pair = coordPair.value
-  if (pair) {
-    return formatCoordinatesDecimal({ lat: pair.lat, lng: pair.lng }, pair.latLabel, pair.lngLabel)
-  }
+/** Только если с API пришла готовая строка без числовых lat/lng (редкий случай). */
+const coordLabelFallback = computed(() => {
+  if (coordPair.value) return ''
   const c = (post.value as Encyclopedia | null)?.coordinates
   if (c?.formatted?.trim()) return shortenFormattedCoordinateDecimals(c.formatted)
   return ''
@@ -129,7 +127,7 @@ function formatPublished(iso: string | null | undefined) {
   return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-type StatCard = { icon: string; title: string; text: string; map?: boolean }
+type StatCard = { icon: string; title: string; text: string; map?: boolean; isCoordinates?: boolean }
 
 const statCards = computed((): StatCard[] => {
   const p = post.value as Encyclopedia | null
@@ -143,12 +141,13 @@ const statCards = computed((): StatCard[] => {
     title: 'Категория',
     text: categoryShortLabel(p.category),
   })
-  if (coordLabel.value) {
+  if (coordPair.value || coordLabelFallback.value) {
     cards.push({
       icon: 'i-heroicons-globe-alt',
       title: 'Координаты',
-      text: coordLabel.value,
+      text: coordLabelFallback.value,
       map: !!coordPair.value,
+      isCoordinates: !!coordPair.value,
     })
   }
   if (p.published_at) {
@@ -199,17 +198,24 @@ const breadcrumbs = computed(() => {
           <p v-if="post.subtitle" class="mt-4 text-xl lg:text-2xl text-olivine-200 font-light">
             {{ post.subtitle }}
           </p>
-          <div v-if="coordLabel" class="mt-6 flex items-center gap-2 text-white/80">
-            <HeroUiIcon name="i-heroicons-map-pin" icon-class="w-4 h-4 flex-shrink-0" />
+          <div v-if="coordPair || coordLabelFallback" class="mt-6 flex items-center gap-3">
+            <HeroUiIcon
+              name="i-heroicons-map-pin"
+              icon-class="w-4 h-4 flex-shrink-0 text-white/75"
+            />
             <button
               v-if="coordPair"
               type="button"
-              class="font-mono text-sm text-left hover:text-white transition-colors"
+              class="text-left w-full min-w-0 rounded-sm outline-offset-4 hover:opacity-95 focus-visible:ring-2 focus-visible:ring-white/40"
               @click="openInMap(coordPair.lat, coordPair.lng)"
             >
-              {{ coordLabel }}
+              <CoordinatesDmsDisplay
+                variant="hero"
+                :latitude="coordPair.lat"
+                :longitude="coordPair.lng"
+              />
             </button>
-            <span v-else class="font-mono text-sm">{{ coordLabel }}</span>
+            <span v-else class="font-mono text-sm">{{ coordLabelFallback }}</span>
           </div>
         </div>
       </div>
@@ -221,17 +227,21 @@ const breadcrumbs = computed(() => {
           <div
             v-for="(card, idx) in statCards"
             :key="idx"
-            class="bg-white rounded-xl shadow-lg p-4 lg:p-6"
+            class="bg-white rounded-xl shadow-lg p-4 lg:p-6 min-w-0"
           >
             <HeroUiIcon :name="card.icon" icon-class="w-5 h-5 text-olivine-500 mb-2" />
-            <p class="text-xs text-gray-500 uppercase tracking-wider">{{ card.title }}</p>
+            <p class="text-xs text-gray-500 uppercase tracking-wider mb-0">{{ card.title }}</p>
             <button
-              v-if="card.map && coordPair"
+              v-if="card.map && coordPair && card.isCoordinates"
               type="button"
-              class="text-sm lg:text-base font-medium text-gray-900 mt-1 text-left w-full hover:text-olivine-600"
+              class="text-left w-full min-w-0 mt-2 hover:opacity-95 rounded-sm outline-offset-2 focus-visible:ring-2 focus-visible:ring-olivine-300"
               @click="openInMap(coordPair.lat, coordPair.lng)"
             >
-              {{ card.text }}
+              <CoordinatesDmsDisplay
+                variant="card"
+                :latitude="coordPair.lat"
+                :longitude="coordPair.lng"
+              />
             </button>
             <p v-else class="text-sm lg:text-base font-medium text-gray-900 mt-1">{{ card.text }}</p>
           </div>
@@ -278,7 +288,7 @@ const breadcrumbs = computed(() => {
       </div>
     </section>
 
-    <section v-if="coordLabel && coordPair" class="py-12 lg:py-16 px-6 lg:px-12 bg-gray-50">
+    <section v-if="coordPair || coordLabelFallback" class="py-12 lg:py-16 px-6 lg:px-12 bg-gray-50">
       <div class="max-w-6xl mx-auto">
         <h2 class="text-2xl lg:text-3xl font-bold text-gray-900 mb-8">Расположение на карте</h2>
         <ClientOnly>
@@ -322,7 +332,16 @@ const breadcrumbs = computed(() => {
             />
           </template>
         </ClientOnly>
-        <p class="mt-4 font-mono text-sm text-gray-600">{{ coordLabel }}</p>
+        <CoordinatesDmsDisplay
+          v-if="coordPair"
+          class="mt-4"
+          variant="inline"
+          :latitude="coordPair.lat"
+          :longitude="coordPair.lng"
+        />
+        <p v-else-if="coordLabelFallback" class="mt-4 font-mono text-sm text-gray-600">
+          {{ coordLabelFallback }}
+        </p>
         <p v-if="post.subtitle" class="mt-2 text-sm text-gray-500">{{ post.subtitle }}</p>
       </div>
     </section>
