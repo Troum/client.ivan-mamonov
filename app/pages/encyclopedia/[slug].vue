@@ -310,20 +310,15 @@ function encyclopediaVideoSrc(path: string): string {
     </section>
 
     <section v-if="attachedVideos.length" class="py-12 lg:py-16 px-6 lg:px-12">
-      <div class="max-w-4xl mx-auto">
+      <div class="max-w-6xl mx-auto">
         <h2 class="text-2xl lg:text-3xl font-bold text-gray-900 mb-8">Видео</h2>
-        <div class="flex flex-col gap-8">
-          <video
+        <div class="flex flex-col gap-10">
+          <SiteMediaVideoPlayer
             v-for="(v, idx) in attachedVideos"
             :key="v.id ?? idx"
-            class="w-full max-h-[min(70vh,720px)] rounded-2xl border border-slate-200 bg-black outline-none"
-            controls
-            playsinline
-            preload="metadata"
             :src="encyclopediaVideoSrc(v.path)"
-          >
-            Ваш браузер не поддерживает встроенное видео (фрагмент {{ idx + 1 }}).
-          </video>
+            :caption="attachedVideos.length > 1 ? `Фрагмент ${idx + 1}` : undefined"
+          />
         </div>
       </div>
     </section>
