@@ -151,24 +151,45 @@ const rootClass = computed(() => {
   font-weight: 500;
 }
 
-/* Карточка статистики: одна строка в колонке (узкая сетка 2×2 / 4 колонки) */
+/* Карточка статистики: на широком экране — одна строка со скроллом; на узком — две строки (Ш / Д) */
 .coords-dms--card {
   max-width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
+}
+
+@media (min-width: 640px) {
+  .coords-dms--card {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
 }
 
 .coords-dms--card .coords-dms__line {
-  flex-wrap: nowrap;
-  width: max-content;
-  min-width: 100%;
+  width: 100%;
+  min-width: 0;
   font-size: clamp(0.625rem, 0.5rem + 0.9vw, 0.75rem);
   font-weight: 600;
   line-height: 1.3;
-  gap: 0.15rem 0.45rem;
+  gap: 0.35rem 0.45rem;
   letter-spacing: -0.01em;
+}
+
+@media (max-width: 639px) {
+  .coords-dms--card .coords-dms__line {
+    flex-direction: column;
+    align-items: flex-start;
+    flex-wrap: nowrap;
+  }
+}
+
+@media (min-width: 640px) {
+  .coords-dms--card .coords-dms__line {
+    flex-wrap: nowrap;
+    width: max-content;
+    min-width: 100%;
+    gap: 0.15rem 0.45rem;
+  }
 }
 
 .coords-dms--card .coords-dms__segment {

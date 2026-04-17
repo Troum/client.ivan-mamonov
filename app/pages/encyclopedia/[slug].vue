@@ -2,6 +2,7 @@
 import { useRoute } from 'vue-router'
 import { ref, computed } from 'vue'
 import type { Encyclopedia } from '~/interfaces/Encyclopedia'
+import { resolvePublicMediaUrl } from '~/composables/usePageSeo'
 import { useFilters } from '~/composables/useFilters'
 import AppBreadcrumbs from "~/components/AppBreadcrumbs.vue";
 
@@ -168,6 +169,21 @@ const breadcrumbs = computed(() => {
     { label: title },
   ]
 })
+
+/** Видеофайлы из админки (не встроены в Tiptap-контент). */
+const attachedVideos = computed(() => {
+  const p = post.value as Encyclopedia | null
+  if (!p) return []
+  const list = p.videos
+  if (!Array.isArray(list) || list.length === 0) return []
+  return list.filter((v): v is { id: number; path: string } =>
+    Boolean(v && typeof v.path === 'string' && v.path.trim() !== '')
+  )
+})
+
+function encyclopediaVideoSrc(path: string): string {
+  return resolvePublicMediaUrl(path.trim())
+}
 </script>
 
 <template>
@@ -185,7 +201,12 @@ const breadcrumbs = computed(() => {
 
       <div class="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
 
-      <div class="absolute bottom-0 left-0 right-0 p-6 lg:p-16">
+      <div
+        class="absolute bottom-0 left-0 right-0 px-6 pt-6 lg:p-16"
+        :class="
+          coordPair || coordLabelFallback ? 'pb-24 sm:pb-20 lg:pb-16' : 'pb-6 lg:pb-16'
+        "
+      >
         <div class="max-w-4xl">
           <span
             class="inline-block px-4 py-1.5 bg-olivine-500 text-white text-xs font-medium tracking-wider uppercase rounded-full mb-4"
@@ -221,7 +242,7 @@ const breadcrumbs = computed(() => {
       </div>
     </section>
 
-    <section v-if="statCards.length" class="py-8 lg:py-12 px-6 lg:px-12 -mt-16 relative z-10">
+    <section v-if="statCards.length" class="py-8 lg:py-12 px-6 lg:px-12 -mt-8 sm:-mt-12 lg:-mt-16 relative z-10">
       <div class="max-w-6xl mx-auto">
         <div class="grid gap-4" :class="gridClass">
           <div
@@ -284,6 +305,25 @@ const breadcrumbs = computed(() => {
           >
             <img :src="src" :alt="`Миниатюра ${i + 1}`" class="w-full h-full object-cover" />
           </button>
+        </div>
+      </div>
+    </section>
+
+    <section v-if="attachedVideos.length" class="py-12 lg:py-16 px-6 lg:px-12">
+      <div class="max-w-4xl mx-auto">
+        <h2 class="text-2xl lg:text-3xl font-bold text-gray-900 mb-8">Видео</h2>
+        <div class="flex flex-col gap-8">
+          <video
+            v-for="(v, idx) in attachedVideos"
+            :key="v.id ?? idx"
+            class="w-full max-h-[min(70vh,720px)] rounded-2xl border border-slate-200 bg-black outline-none"
+            controls
+            playsinline
+            preload="metadata"
+            :src="encyclopediaVideoSrc(v.path)"
+          >
+            Ваш браузер не поддерживает встроенное видео (фрагмент {{ idx + 1 }}).
+          </video>
         </div>
       </div>
     </section>

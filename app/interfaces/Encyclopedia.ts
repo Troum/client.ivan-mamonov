@@ -1,5 +1,11 @@
 import type { ApiCoordinates, ApiImage, CommonStatus } from '~/interfaces/Post'
 
+/** Видео с API (`VideoResource`). */
+export interface ApiEncyclopediaVideo {
+  id: number
+  path: string
+}
+
 export interface Encyclopedia {
   title: string
   subtitle?: string
@@ -9,7 +15,9 @@ export interface Encyclopedia {
   preview_image?: ApiImage | null
   main_images?: ApiImage[]
   has_main_images?: boolean
-  videos?: unknown[]
+  /** Файлы, загруженные в админке отдельно от текста статьи. */
+  videos?: ApiEncyclopediaVideo[]
+  has_videos?: boolean
   external_links?: unknown
   coordinates?: ApiCoordinates | null
   status?: CommonStatus
