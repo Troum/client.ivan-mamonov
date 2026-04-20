@@ -34,6 +34,8 @@ const currentTime = ref(0)
 const volume = ref(1)
 const isMuted = ref(false)
 const isFs = ref(false)
+/** Нижняя панель — только после первого успешного воспроизведения */
+const controlBarVisible = ref(false)
 
 const progressPercent = computed(() => {
   if (!duration.value || duration.value <= 0) return 0
@@ -68,6 +70,7 @@ function onTimeUpdate() {
 
 function onPlay() {
   isPlaying.value = true
+  controlBarVisible.value = true
 }
 
 function onPause() {
@@ -161,6 +164,7 @@ watch(
     duration.value = 0
     currentTime.value = 0
     isWaiting.value = false
+    controlBarVisible.value = false
   }
 )
 
@@ -174,10 +178,10 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <figure class="site-media-video mx-auto w-full" :class="maxWidthClass">
+  <figure class="site-media-video w-full" :class="maxWidthClass">
     <div
       ref="rootRef"
-      class="group relative aspect-video w-full overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800 via-slate-900 to-black shadow-lg ring-1 ring-slate-200/90 outline-none"
+      class="group relative aspect-video w-full overflow-hidden rounded-2xl bg-linear-to-br from-slate-800 via-slate-900 to-black shadow-lg ring-1 ring-slate-200/90 outline-none"
       tabindex="0"
       role="region"
       aria-label="Видеоплеер"
@@ -186,7 +190,7 @@ onUnmounted(() => {
       <!-- Загрузка метаданных -->
       <div
         v-if="!hasMetadata && !hasError"
-        class="absolute inset-0 z-[1] bg-gradient-to-br from-olivine-900/35 via-slate-900/90 to-slate-950"
+        class="absolute inset-0 z-1 bg-linear-to-br from-olivine-900/35 via-slate-900/90 to-slate-950"
         aria-hidden="true"
       >
         <div
@@ -203,7 +207,7 @@ onUnmounted(() => {
 
       <div
         v-if="hasError"
-        class="absolute inset-0 z-[2] flex flex-col items-center justify-center gap-2 bg-slate-900 px-4 text-center"
+        class="absolute inset-0 z-2 flex flex-col items-center justify-center gap-2 bg-slate-900 px-4 text-center"
       >
         <p class="text-sm font-medium text-white/90">Не удалось загрузить видео</p>
         <p class="max-w-sm text-xs text-white/55">Проверьте ссылку на файл или попробуйте позже.</p>
@@ -232,7 +236,7 @@ onUnmounted(() => {
       <!-- Буферизация -->
       <div
         v-if="isWaiting && hasMetadata && !hasError"
-        class="pointer-events-none absolute inset-0 z-[2] flex items-center justify-center bg-black/20"
+        class="pointer-events-none absolute inset-0 z-2 flex items-center justify-center bg-black/20"
         aria-hidden="true"
       >
         <div
@@ -240,11 +244,11 @@ onUnmounted(() => {
         />
       </div>
 
-      <!-- Центр: play при паузе -->
+      <!-- Центр: play до первого старта (панель ещё скрыта) -->
       <button
-        v-if="hasMetadata && !isPlaying && !hasError"
+        v-if="hasMetadata && !isPlaying && !hasError && !controlBarVisible"
         type="button"
-        class="absolute inset-0 z-[3] flex cursor-pointer items-center justify-center border-0 bg-gradient-to-t from-black/50 via-transparent to-transparent p-0 transition hover:from-black/60"
+        class="absolute inset-0 z-3 flex cursor-pointer items-center justify-center border-0 bg-linear-to-t from-black/50 via-transparent to-transparent p-0 transition hover:from-black/60"
         aria-label="Воспроизвести"
         @click.stop="togglePlay"
       >
@@ -255,10 +259,10 @@ onUnmounted(() => {
         </span>
       </button>
 
-      <!-- Кастомная панель -->
+      <!-- Кастомная панель — после первого play -->
       <div
-        v-if="hasMetadata && !hasError"
-        class="absolute inset-x-0 bottom-0 z-[4] bg-gradient-to-t from-black/85 via-black/50 to-transparent px-3 pb-3 pt-10 sm:px-4"
+        v-if="hasMetadata && !hasError && controlBarVisible"
+        class="absolute inset-x-0 bottom-0 z-4 bg-linear-to-t from-black/85 via-black/50 to-transparent px-3 pb-3 pt-10 sm:px-4"
         @click.stop
       >
         <!-- Прогресс -->
@@ -308,7 +312,7 @@ onUnmounted(() => {
               min="0"
               max="100"
               :value="isMuted ? 0 : volume * 100"
-              class="site-video-range-vol hidden h-1 w-20 max-w-[5rem] cursor-pointer appearance-none rounded-full bg-white/20 accent-olivine-400 sm:block [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:w-2.5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-moz-range-thumb]:h-2.5 [&::-moz-range-thumb]:w-2.5 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-white"
+              class="site-video-range-vol hidden h-1 w-20 max-w-20 cursor-pointer appearance-none rounded-full bg-white/20 accent-olivine-400 sm:block [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:w-2.5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-moz-range-thumb]:h-2.5 [&::-moz-range-thumb]:w-2.5 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-white"
               @input="onVolumeInput"
             />
           </div>
