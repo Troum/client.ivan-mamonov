@@ -14,17 +14,17 @@ defineProps<{
 
 <template>
   <div
-    class="pointer-events-none fixed top-20 lg:top-24 left-6 lg:left-12 z-30 max-w-[min(calc(100vw-3rem),42rem)]"
+    class="pointer-events-none fixed top-20 lg:top-24 left-4 right-4 z-30 lg:left-12 lg:right-auto lg:max-w-[min(100%,48rem)]"
   >
     <div
-      class="pointer-events-auto flex items-center rounded-full border border-white/30 bg-white/80 px-4 py-2.5 shadow-sm backdrop-blur-sm"
+      class="pointer-events-auto inline-flex max-w-full rounded-full border border-white/30 bg-white/85 px-4 py-2.5 shadow-sm backdrop-blur-sm"
     >
-      <nav class="flex min-h-[1.25rem] items-center text-sm leading-none" aria-label="Навигационная цепочка">
-        <ol class="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+      <nav class="max-w-full text-sm leading-snug" aria-label="Навигационная цепочка">
+        <ol class="flex max-w-full flex-wrap items-center gap-x-1.5 gap-y-1">
           <li
             v-for="(item, i) in items"
             :key="i"
-            class="flex min-w-0 max-w-full items-center gap-x-1.5"
+            class="inline-flex min-w-0 max-w-full items-center gap-x-1.5"
           >
             <ChevronRightIcon
               v-if="i > 0"
@@ -34,13 +34,14 @@ defineProps<{
             <NuxtLink
               v-if="item.to"
               :to="item.to"
-              class="inline-flex items-center text-gray-600 transition-colors hover:text-olivine-600 max-w-[min(100%,24rem)] truncate"
+              class="shrink-0 text-gray-600 transition-colors hover:text-olivine-600"
             >
               {{ item.label }}
             </NuxtLink>
             <span
               v-else
-              class="inline-flex items-center font-medium text-gray-900 max-w-[min(100%,24rem)] truncate"
+              class="min-w-0 truncate font-medium text-gray-900"
+              :title="item.label"
               aria-current="page"
             >
               {{ item.label }}

@@ -49,13 +49,18 @@ const carouselItems = computed(() => {
   if (!p) return []
   const main = p.main_images
   if (Array.isArray(main) && main.length > 0) return main
-  if (p.preview_image?.path) return [p.preview_image]
   return []
 })
 
 const galleryPaths = computed(() => carouselItems.value.map((i) => i.path))
 
-const heroImageSrc = computed(() => galleryPaths.value[0] ?? '')
+/** Обложка hero — preview_image (кадрируется в админке), не первое фото галереи. */
+const heroImageSrc = computed(() => {
+  const p = post.value as Encyclopedia | null
+  if (!p) return ''
+  if (p.preview_image?.path) return p.preview_image.path
+  return galleryPaths.value[0] ?? ''
+})
 
 const coordPair = computed(() => {
   const c = (post.value as Encyclopedia | null)?.coordinates
@@ -190,19 +195,18 @@ function encyclopediaVideoSrc(path: string): string {
   <div v-if="post" class="min-h-screen bg-white">
     <AppBreadcrumbs :items="breadcrumbs" />
 
-    <section class="relative h-[70vh] lg:h-[80vh] overflow-hidden">
-      <img
+    <section class="relative h-[55vh] min-h-[320px] max-h-[720px] lg:h-[65vh] overflow-hidden">
+      <HeroCoverImage
         v-if="heroImageSrc"
         :src="heroImageSrc"
         :alt="post.title as string"
-        class="w-full h-full object-cover"
       />
       <div v-else class="w-full h-full bg-linear-to-br from-olivine-300 to-olivine-800" />
 
-      <div class="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
+      <div class="absolute inset-0 z-[2] bg-linear-to-t from-black/85 via-black/45 to-black/15" />
 
       <div
-        class="absolute bottom-0 left-0 right-0 px-6 pt-6 lg:p-16"
+        class="absolute bottom-0 left-0 right-0 z-[3] px-6 pt-6 lg:p-16"
         :class="
           coordPair || coordLabelFallback ? 'pb-24 sm:pb-20 lg:pb-16' : 'pb-6 lg:pb-16'
         "
@@ -213,7 +217,9 @@ function encyclopediaVideoSrc(path: string): string {
           >
             {{ categoryBadgeLabel(post.category as any) }}
           </span>
-          <h1 class="text-4xl lg:text-6xl xl:text-7xl font-extrabold text-white tracking-tight leading-none">
+          <h1
+            class="text-3xl sm:text-4xl lg:text-6xl xl:text-7xl font-extrabold text-white tracking-tight leading-tight [text-shadow:0_2px_24px_rgba(0,0,0,0.55)]"
+          >
             {{ post.title }}
           </h1>
           <p v-if="post.subtitle" class="mt-4 text-xl lg:text-2xl text-olivine-200 font-light">
@@ -287,7 +293,7 @@ function encyclopediaVideoSrc(path: string): string {
           <img
             :src="galleryPaths[gallerySelected]"
             :alt="`${post.title} — фото ${gallerySelected + 1}`"
-            class="w-full h-full object-cover"
+            class="w-full h-full object-cover object-center"
           />
         </div>
         <div v-if="galleryPaths.length > 1" class="flex gap-3 flex-wrap">
