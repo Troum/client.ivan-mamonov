@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ExclamationCircleIcon } from '@heroicons/vue/24/outline'
 import type { Post } from '~/interfaces/Post'
 import { useFilters } from '~/composables/useFilters'
 import { defaultSiteBlogSection, loadSiteBlogSection } from '~/composables/useSiteContent'
@@ -84,7 +85,21 @@ const breadcrumbs = [
     />
 
     <section class="py-16 lg:py-24 px-6 lg:px-12 max-w-7xl mx-auto">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+      <div
+        v-if="posts.length === 0"
+        class="flex flex-col items-center justify-center py-24 text-center"
+      >
+        <div class="w-24 h-24 bg-olivine-50 rounded-full flex items-center justify-center mb-6">
+          <ExclamationCircleIcon class="w-10 h-10 text-olivine-300" />
+        </div>
+        <h2 class="text-2xl font-semibold text-gray-400">
+          Пока нет записей
+        </h2>
+        <p class="mt-3 text-gray-400 max-w-md">
+          Мы работаем над наполнением блога. Скоро здесь появятся истории путешествий и снимки с маршрутов.
+        </p>
+      </div>
+      <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
         <article
           v-for="(post, index) in posts"
           :key="post.slug"
