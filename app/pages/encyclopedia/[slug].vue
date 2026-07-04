@@ -189,14 +189,45 @@ const attachedVideos = computed(() => {
 function encyclopediaVideoSrc(path: string): string {
   return resolvePublicMediaUrl(path.trim())
 }
+
+const isBreadcrumbCollapsed = ref(false)
+const BREADCRUMB_COLLAPSE_Y = 96
+
+function handleBreadcrumbScroll() {
+  isBreadcrumbCollapsed.value = window.scrollY > BREADCRUMB_COLLAPSE_Y
+}
+
+onMounted(() => {
+  window.addEventListener('scroll', handleBreadcrumbScroll, { passive: true })
+  handleBreadcrumbScroll()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleBreadcrumbScroll)
+})
+
+watch(
+  () => route.params.slug,
+  () => {
+    isBreadcrumbCollapsed.value = false
+  }
+)
 </script>
 
 <template>
   <div v-if="post" class="min-h-screen bg-white">
     <div
-      class="pointer-events-none fixed top-28 lg:top-32 left-4 z-30 lg:left-12"
+      class="pointer-events-none fixed top-28 lg:top-32 left-4 z-30 lg:left-12 transition-[opacity,transform] duration-300 ease-out"
+      :class="
+        isBreadcrumbCollapsed
+          ? 'pointer-events-none -translate-y-3 opacity-0'
+          : 'translate-y-0 opacity-100'
+      "
     >
-      <div class="pointer-events-auto flex w-fit max-w-[calc(100vw-2rem)] flex-col items-start gap-2 lg:max-w-[calc(100vw-6rem)]">
+      <div
+        class="pointer-events-auto flex w-fit max-w-[calc(100vw-2rem)] flex-col items-start gap-2 transition-[opacity,transform] duration-300 ease-out lg:max-w-[calc(100vw-6rem)]"
+        :class="isBreadcrumbCollapsed ? 'pointer-events-none scale-[0.98]' : 'scale-100'"
+      >
         <span
           class="inline-block shrink-0 rounded-full bg-olivine-500 px-4 py-1.5 text-xs font-medium tracking-wider text-white uppercase shadow-sm"
         >

@@ -18,14 +18,41 @@ withDefaults(
 
 const pillClass =
   'inline-flex w-fit max-w-[calc(100vw-2rem)] lg:max-w-[calc(100vw-6rem)] rounded-2xl border border-white/30 bg-white/85 px-4 py-2.5 shadow-sm backdrop-blur-sm'
+
+const isCollapsed = ref(false)
+const COLLAPSE_SCROLL_Y = 96
+
+function handleScroll() {
+  isCollapsed.value = window.scrollY > COLLAPSE_SCROLL_Y
+}
+
+onMounted(() => {
+  window.addEventListener('scroll', handleScroll, { passive: true })
+  handleScroll()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
+})
 </script>
 
 <template>
   <div
     v-if="fixed"
-    class="pointer-events-none fixed top-28 lg:top-32 left-4 z-30 lg:left-12"
+    class="pointer-events-none fixed top-28 lg:top-32 left-4 z-30 lg:left-12 transition-[opacity,transform] duration-300 ease-out"
+    :class="
+      isCollapsed
+        ? 'pointer-events-none -translate-y-3 opacity-0'
+        : 'translate-y-0 opacity-100'
+    "
   >
-    <div :class="[pillClass, 'pointer-events-auto']">
+    <div
+      :class="[
+        pillClass,
+        'pointer-events-auto transition-[opacity,transform] duration-300 ease-out',
+        isCollapsed ? 'pointer-events-none scale-[0.98]' : 'scale-100',
+      ]"
+    >
       <nav class="max-w-full text-sm leading-snug" aria-label="Навигационная цепочка">
         <ol class="flex max-w-full flex-wrap items-center gap-x-1.5 gap-y-1">
           <li
