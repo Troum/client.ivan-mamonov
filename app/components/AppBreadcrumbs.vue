@@ -17,13 +17,13 @@ withDefaults(
 )
 
 const pillClass =
-  'inline-flex max-w-full rounded-2xl border border-white/30 bg-white/85 px-4 py-2.5 shadow-sm backdrop-blur-sm'
+  'inline-flex w-fit max-w-[calc(100vw-2rem)] lg:max-w-[calc(100vw-6rem)] rounded-2xl border border-white/30 bg-white/85 px-4 py-2.5 shadow-sm backdrop-blur-sm'
 </script>
 
 <template>
   <div
     v-if="fixed"
-    class="pointer-events-none fixed top-20 lg:top-24 left-4 right-4 z-30 lg:left-12 lg:right-12"
+    class="pointer-events-none fixed top-28 lg:top-32 left-4 z-30 lg:left-12"
   >
     <div :class="[pillClass, 'pointer-events-auto']">
       <nav class="max-w-full text-sm leading-snug" aria-label="Навигационная цепочка">
@@ -57,7 +57,7 @@ const pillClass =
       </nav>
     </div>
   </div>
-  <div v-else :class="[pillClass, 'w-full min-w-0']">
+  <div v-else :class="pillClass">
     <nav class="max-w-full text-sm leading-snug" aria-label="Навигационная цепочка">
       <ol class="flex max-w-full flex-wrap items-center gap-x-1.5 gap-y-1">
         <li

@@ -194,9 +194,9 @@ function encyclopediaVideoSrc(path: string): string {
 <template>
   <div v-if="post" class="min-h-screen bg-white">
     <div
-      class="pointer-events-none fixed top-[4.25rem] lg:top-[5.25rem] left-4 right-4 z-30 lg:left-12 lg:right-12"
+      class="pointer-events-none fixed top-28 lg:top-32 left-4 z-30 lg:left-12"
     >
-      <div class="pointer-events-auto flex w-full max-w-full flex-col items-start gap-2">
+      <div class="pointer-events-auto flex w-fit max-w-[calc(100vw-2rem)] flex-col items-start gap-2 lg:max-w-[calc(100vw-6rem)]">
         <span
           class="inline-block shrink-0 rounded-full bg-olivine-500 px-4 py-1.5 text-xs font-medium tracking-wider text-white uppercase shadow-sm"
         >
