@@ -31,11 +31,11 @@ watch(
       :class="useContain ? 'opacity-70' : 'opacity-50'"
     />
     <img
+      v-if="!useContain"
       :key="props.src"
       :src="props.src"
       :alt="props.alt"
-      class="relative z-[1] h-full w-full"
-      :class="useContain ? 'object-contain object-center' : 'object-cover object-[center_30%]'"
+      class="relative z-[1] h-full w-full object-cover object-[center_30%]"
       @load="syncFit"
     />
   </div>

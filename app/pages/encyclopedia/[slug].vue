@@ -193,17 +193,30 @@ function encyclopediaVideoSrc(path: string): string {
 
 <template>
   <div v-if="post" class="min-h-screen bg-white">
-    <AppBreadcrumbs :items="breadcrumbs" />
+    <div
+      class="pointer-events-none fixed top-[4.25rem] lg:top-[5.25rem] left-4 right-4 z-30 lg:left-12 lg:right-12"
+    >
+      <div class="pointer-events-auto flex w-full max-w-full flex-col items-start gap-2">
+        <span
+          class="inline-block shrink-0 rounded-full bg-olivine-500 px-4 py-1.5 text-xs font-medium tracking-wider text-white uppercase shadow-sm"
+        >
+          {{ categoryBadgeLabel(post.category as any) }}
+        </span>
+        <AppBreadcrumbs :items="breadcrumbs" :fixed="false" />
+      </div>
+    </div>
 
-    <section class="relative h-[55vh] min-h-[320px] max-h-[720px] lg:h-[65vh] overflow-hidden">
-      <HeroCoverImage
-        v-if="heroImageSrc"
-        :src="heroImageSrc"
-        :alt="post.title as string"
-      />
-      <div v-else class="w-full h-full bg-linear-to-br from-olivine-300 to-olivine-800" />
+    <section class="relative h-[55vh] min-h-[320px] max-h-[720px] lg:h-[65vh]">
+      <div class="absolute inset-0 overflow-hidden">
+        <HeroCoverImage
+          v-if="heroImageSrc"
+          :src="heroImageSrc"
+          :alt="post.title as string"
+        />
+        <div v-else class="h-full w-full bg-linear-to-br from-olivine-300 to-olivine-800" />
 
-      <div class="absolute inset-0 z-[2] bg-linear-to-t from-black/85 via-black/45 to-black/15" />
+        <div class="absolute inset-0 z-[2] bg-linear-to-t from-black/85 via-black/45 to-black/15" />
+      </div>
 
       <div
         class="absolute bottom-0 left-0 right-0 z-[3] px-6 pt-6 lg:p-16"
@@ -212,13 +225,8 @@ function encyclopediaVideoSrc(path: string): string {
         "
       >
         <div class="max-w-4xl">
-          <span
-            class="inline-block px-4 py-1.5 bg-olivine-500 text-white text-xs font-medium tracking-wider uppercase rounded-full mb-4"
-          >
-            {{ categoryBadgeLabel(post.category as any) }}
-          </span>
           <h1
-            class="text-3xl sm:text-4xl lg:text-6xl xl:text-7xl font-extrabold text-white tracking-tight leading-tight [text-shadow:0_2px_24px_rgba(0,0,0,0.55)]"
+            class="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-extrabold text-white tracking-tight leading-snug [text-shadow:0_2px_24px_rgba(0,0,0,0.55)]"
           >
             {{ post.title }}
           </h1>
