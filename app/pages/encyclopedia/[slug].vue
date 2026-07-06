@@ -10,6 +10,10 @@ const nuxtApp = useNuxtApp()
 const route = useRoute()
 const runtimeConfig = useRuntimeConfig()
 const { shortenFormattedCoordinateDecimals } = useFilters()
+const { resolveLocationLabel } = useReverseGeocode()
+
+const locationLabel = ref('')
+const locationLoading = ref(false)
 
 const hasMapboxToken = computed(() => {
   const t = runtimeConfig.public.mapbox?.accessToken
@@ -133,14 +137,38 @@ function formatPublished(iso: string | null | undefined) {
   return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
+async function loadLocationLabel() {
+  const p = coordPair.value
+  if (!p) {
+    locationLabel.value = ''
+    locationLoading.value = false
+    return
+  }
+
+  locationLoading.value = true
+  try {
+    locationLabel.value = (await resolveLocationLabel(p.lat, p.lng)) ?? ''
+  } finally {
+    locationLoading.value = false
+  }
+}
+
+watch(coordPair, () => {
+  void loadLocationLabel()
+}, { immediate: true })
+
 type StatCard = { icon: string; title: string; text: string; map?: boolean; isCoordinates?: boolean }
 
 const statCards = computed((): StatCard[] => {
   const p = post.value as Encyclopedia | null
   if (!p) return []
   const cards: StatCard[] = []
-  if (p.subtitle?.trim()) {
-    cards.push({ icon: 'i-heroicons-map-pin', title: 'Локация', text: p.subtitle.trim() })
+  if (coordPair.value && (locationLabel.value.trim() || locationLoading.value)) {
+    cards.push({
+      icon: 'i-heroicons-map-pin',
+      title: 'Локация',
+      text: locationLabel.value.trim() || '…',
+    })
   }
   cards.push({
     icon: 'i-heroicons-tag',
@@ -229,7 +257,7 @@ watch(
         :class="isBreadcrumbCollapsed ? 'pointer-events-none scale-[0.98]' : 'scale-100'"
       >
         <span
-          class="inline-block shrink-0 rounded-full bg-olivine-500 px-4 py-1.5 text-xs font-medium tracking-wider text-white uppercase shadow-sm"
+          class="mb-3 inline-block shrink-0 rounded-full bg-olivine-500 px-4 py-1.5 text-xs font-medium tracking-wider text-white uppercase shadow-sm"
         >
           {{ categoryBadgeLabel(post.category as any) }}
         </span>
@@ -422,7 +450,7 @@ watch(
         <p v-else-if="coordLabelFallback" class="mt-4 font-mono text-sm text-gray-600">
           {{ coordLabelFallback }}
         </p>
-        <p v-if="post.subtitle" class="mt-2 text-sm text-gray-500">{{ post.subtitle }}</p>
+        <p v-else-if="locationLabel" class="mt-2 text-sm text-gray-500">{{ locationLabel }}</p>
       </div>
     </section>
   </div>

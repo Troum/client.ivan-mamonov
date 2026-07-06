@@ -1,0 +1,30 @@
+name: Deploy Client Ivan Mamonov
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Deploy Landing to Production
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          password: ${{ secrets.DEPLOY_PASSWORD }}
+          script: |
+            export NVM_DIR="/root/.nvm"
+            source "$NVM_DIR/nvm.sh"
+            nvm use 20
+            cd /var/www/ivanmamonov.online
+            git pull origin main
+            npm ci && npm run build
+            pm2 restart ecosystem.config.cjs
+            echo "Ivan Mamonov Client deployment complete!"
