@@ -1,11 +1,16 @@
 <script setup lang="ts">
-const props = defineProps<{
-  platform: string
-  url: string
-  ariaLabel?: string | null
-}>()
+const props = withDefaults(
+  defineProps<{
+    platform: string
+    url: string
+    ariaLabel?: string | null
+    variant?: 'default' | 'footer'
+  }>(),
+  { variant: 'default' }
+)
 
 const hoverClass = computed(() => {
+  if (props.variant === 'footer') return ''
   const m: Record<string, string> = {
     instagram: 'hover:bg-pink-50 hover:text-pink-600',
     telegram: 'hover:bg-olivine-100 hover:text-blue-500',
@@ -15,6 +20,13 @@ const hoverClass = computed(() => {
   }
   return m[props.platform] ?? 'hover:bg-gray-200 hover:text-gray-900'
 })
+
+const buttonClass = computed(() => {
+  if (props.variant === 'footer') {
+    return 'w-10 h-10 bg-olivine-900 rounded-full flex items-center justify-center text-olivine-200 hover:bg-olivine-500 hover:text-white transition-all duration-300'
+  }
+  return `w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 transition-all duration-300 ${hoverClass.value}`
+})
 </script>
 
 <template>
@@ -22,8 +34,7 @@ const hoverClass = computed(() => {
     :href="url"
     target="_blank"
     rel="noopener noreferrer"
-    class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 transition-all duration-300"
-    :class="hoverClass"
+    :class="buttonClass"
     :aria-label="ariaLabel || platform"
   >
     <svg
