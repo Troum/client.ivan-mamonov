@@ -3,7 +3,6 @@ import {
   ArrowLeft,
   CalendarDays,
   ChevronRight,
-  Globe2,
   Images,
   MapPin,
   Tag,
@@ -250,10 +249,10 @@ usePageSeo(
           <button
             v-if="coordPair"
             type="button"
-            class="mt-7 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-2 text-[13px] font-medium tracking-wide text-white/90 backdrop-blur-sm transition hover:bg-white/20"
+            class="mt-6 inline-flex max-w-full items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-2.5 py-1 text-[11px] font-medium tracking-wide text-white/90 backdrop-blur-sm transition hover:bg-white/20"
             @click="openInMap(coordPair.lat, coordPair.lng)"
           >
-            <MapPin class="h-4 w-4 text-sand" />
+            <MapPin class="h-3 w-3 shrink-0 text-sand" />
             <CoordinatesDmsDisplay
               variant="hero"
               :latitude="coordPair.lat"
@@ -262,9 +261,9 @@ usePageSeo(
           </button>
           <p
             v-else
-            class="mt-7 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-2 text-[13px] font-medium text-white/90"
+            class="mt-6 inline-flex max-w-full items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white/90"
           >
-            <MapPin class="h-4 w-4 text-sand" />
+            <MapPin class="h-3 w-3 shrink-0 text-sand" />
             {{ coordLabelFallback }}
           </p>
         </Reveal>
@@ -308,39 +307,7 @@ usePageSeo(
               <p class="mt-1 text-[15px] font-semibold text-ink">{{ publishedLabel }}</p>
             </div>
           </div>
-          <div v-if="coordPair || coordLabelFallback" class="flex items-center gap-4">
-            <span
-              class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-moss-wash text-moss"
-            >
-              <Globe2 class="h-5 w-5" />
-            </span>
-            <div class="min-w-0">
-              <p
-                class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
-              >
-                Координаты
-              </p>
-              <button
-                v-if="coordPair"
-                type="button"
-                class="mt-1 w-full truncate text-left text-[14px] font-semibold text-ink hover:text-moss"
-                @click="openInMap(coordPair.lat, coordPair.lng)"
-              >
-                <CoordinatesDmsDisplay
-                  variant="card"
-                  :latitude="coordPair.lat"
-                  :longitude="coordPair.lng"
-                />
-              </button>
-              <p v-else class="mt-1 truncate text-[14px] font-semibold text-ink">
-                {{ coordLabelFallback }}
-              </p>
-            </div>
-          </div>
-          <div
-            v-if="locationLabel || locationLoading"
-            class="flex items-center gap-4 sm:col-span-3"
-          >
+          <div v-if="locationLabel || locationLoading" class="flex items-center gap-4">
             <span
               class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-moss-wash text-moss"
             >

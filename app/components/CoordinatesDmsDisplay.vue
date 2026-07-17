@@ -119,17 +119,26 @@ const rootClass = computed(() => {
   margin-left: 0.1em;
 }
 
-/* Hero */
+/* Hero — компактная плашка */
+.coords-dms--hero {
+  width: auto;
+}
+
 .coords-dms--hero .coords-dms__line {
-  font-size: 0.875rem;
+  font-size: 0.6875rem;
   font-weight: 500;
-  gap: 0.5rem 1.25rem;
+  gap: 0.25rem 0.55rem;
+  line-height: 1.2;
 }
 
 @media (min-width: 640px) {
   .coords-dms--hero .coords-dms__line {
-    font-size: 1rem;
+    font-size: 0.75rem;
   }
+}
+
+.coords-dms--hero .coords-dms__segment {
+  gap: 0.15rem;
 }
 
 .coords-dms--hero .coords-dms__abbrev {
@@ -144,6 +153,11 @@ const rootClass = computed(() => {
 .coords-dms--hero .coords-dms__sym {
   color: rgb(255 255 255 / 0.55);
   font-weight: 400;
+  margin: 0 0.02em;
+}
+
+.coords-dms--hero .coords-dms__sp {
+  width: 0.12em;
 }
 
 .coords-dms--hero .coords-dms__hem {
