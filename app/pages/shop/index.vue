@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ShoppingCartIcon } from '@heroicons/vue/24/outline'
+import { ArrowRight, BellRing, GraduationCap, Image, ShoppingBag, Wand2 } from '@lucide/vue'
 import type { ProductListItem } from '~/interfaces/Product'
 import { storeToRefs } from 'pinia'
 import { defaultSiteShopPage, loadSiteShopPage } from '~/composables/useSiteContent'
@@ -79,155 +79,178 @@ function formatPrice(p: ProductListItem) {
   return `${formatted} ${sym}`
 }
 
-const breadcrumbs = [
-  { label: 'Главная', to: '/' },
-  { label: 'Магазин' },
-]
 </script>
 
 <template>
-  <div class="min-h-screen bg-white">
-    <AppBreadcrumbs :items="breadcrumbs" />
-    <section class="pt-32 pb-16 px-6 lg:px-12">
-      <div class="max-w-7xl mx-auto">
-        <h1 class="text-6xl lg:text-8xl xl:text-9xl font-extrabold text-olivine-100 tracking-tight">
-          МАГАЗИН
-        </h1>
+  <div>
+    <PageHero
+      eyebrow="Авторский магазин"
+      current="Магазин"
+      image="/images/hero-shop.jpg"
+      title="Печатные работы и материалы"
+      title-html="Печатные работы <em class=&quot;italic text-moss&quot;>и материалы</em>"
+      subtitle="Фотографии, знания и инструменты, созданные в экспедициях по Дальнему Востоку."
+    >
+      <NuxtLink
+        to="/shop/cart"
+        class="group btn-outline mt-8"
+        @mouseenter="cartHovered = true"
+        @mouseleave="cartHovered = false"
+      >
+        <ShoppingBag
+          :class="['h-4 w-4 transition-transform duration-300', cartHovered ? 'scale-110' : '']"
+        />
+        Корзина
+        <span class="flex h-6 min-w-6 items-center justify-center rounded-full bg-moss px-1.5 text-xs text-white">
+          {{ itemCount }}
+        </span>
+      </NuxtLink>
+    </PageHero>
 
-        <p class="mt-6 text-lg lg:text-xl text-gray-600 max-w-2xl">
-          Печатные работы и материалы. Оформление и доставка по договоренности.
-        </p>
-
-        <div class="mt-8 flex items-center gap-3">
-          <NuxtLink
-            to="/shop/cart"
-            class="flex items-center gap-2 px-4 py-2 bg-olivine-50 text-olivine-700 rounded-full font-medium transition-all duration-300 hover:bg-olivine-100"
-            @mouseenter="cartHovered = true"
-            @mouseleave="cartHovered = false"
-          >
-            <ShoppingCartIcon
-              :class="['w-5 h-5 transition-transform duration-300', cartHovered ? 'scale-110' : '']"
+    <section class="container-x pb-20 sm:pb-28">
+      <Reveal>
+        <div class="grid overflow-hidden rounded-[2rem] bg-ink lg:grid-cols-[0.9fr_1.1fr]">
+          <div class="relative min-h-72 overflow-hidden lg:min-h-[430px]">
+            <img
+              src="/images/hero-shop.jpg"
+              alt="Пейзажная фотография Ивана Мамонова"
+              class="h-full w-full object-cover opacity-80"
             />
-            <span>КОРЗИНА</span>
-            <span class="bg-olivine-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center">
-              {{ itemCount }}
+            <div class="absolute inset-0 bg-gradient-to-r from-transparent to-ink/45" />
+          </div>
+          <div class="flex flex-col justify-center px-7 py-12 sm:px-12 lg:px-16">
+            <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-moss/20 text-moss-soft">
+              <BellRing class="h-5 w-5" />
             </span>
-          </NuxtLink>
+            <p class="mt-7 text-[11px] font-semibold uppercase tracking-[0.22em] text-moss-soft">
+              Будьте первыми
+            </p>
+            <h2 class="mt-3 font-display text-4xl font-medium text-paper sm:text-5xl">
+              Скоро <em class="italic text-sand">открытие</em>
+            </h2>
+            <p class="mt-5 max-w-lg text-[15px] leading-relaxed text-paper/60">
+              Подпишитесь на рассылку — сообщу о первых тиражах, курсах и наборах пресетов.
+            </p>
+            <div class="mt-8 max-w-xl">
+              <FormsSubscribeInline dark />
+            </div>
+          </div>
         </div>
-      </div>
+      </Reveal>
     </section>
 
-    <section class="py-16 px-6 lg:px-12">
-      <div class="max-w-7xl mx-auto">
-        <div v-if="loading" class="text-center py-24 text-gray-500">Загрузка…</div>
-        <p v-else-if="error" class="text-center py-24 text-red-600">{{ error }}</p>
-
-        <template v-else-if="!items.length">
-          <div class="flex flex-col items-center justify-center py-24 text-center">
-            <div class="w-24 h-24 bg-olivine-50 rounded-full flex items-center justify-center mb-6">
-              <ShoppingCartIcon class="w-10 h-10 text-olivine-300" />
+    <section v-if="loading || error || items.length" class="border-y border-line bg-white/60 py-20 sm:py-24">
+      <div class="container-x">
+        <Reveal>
+          <div class="flex flex-wrap items-end justify-between gap-5">
+            <div>
+              <p class="eyebrow">Каталог</p>
+              <h2 class="display-1 mt-3 text-4xl sm:text-5xl">
+                Доступно <em class="italic text-moss">сейчас</em>
+              </h2>
             </div>
-            <h2 class="text-2xl font-semibold text-gray-400">Пока нет товаров в каталоге</h2>
-            <p class="mt-3 text-gray-400 max-w-md">
-              Мы работаем над наполнением магазина. Скоро здесь появятся печатные работы, курсы и пресеты.
-            </p>
-          </div>
-
-          <div class="mt-16 p-8 bg-olivine-50 rounded-2xl text-center">
-            <h3 class="text-xl font-semibold text-olivine-800 mb-3">Скоро открытие</h3>
-            <p class="text-olivine-600">
-              Подпишитесь на рассылку, чтобы первым узнать о появлении новых товаров
-            </p>
-            <div class="mt-6">
-              <FormsSubscribeInline />
-            </div>
-          </div>
-        </template>
-
-        <ul v-else class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 list-none p-0 m-0">
-          <li
-            v-for="p in items"
-            :key="p.id"
-            class="flex flex-col rounded-2xl overflow-hidden bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
-          >
-            <NuxtLink :to="`/shop/${p.slug}`" class="group block flex-1">
-              <div class="aspect-[4/3] bg-gray-100 overflow-hidden">
-                <img
-                  v-if="p.preview_image?.path"
-                  :src="p.preview_image.path"
-                  :alt="p.title"
-                  class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
-                />
-                <div v-else class="w-full h-full flex items-center justify-center text-gray-400 text-sm">
-                  Нет фото
-                </div>
-              </div>
-              <div class="p-5 flex flex-col gap-2">
-                <h2 class="text-xl font-semibold text-gray-900 uppercase leading-tight group-hover:text-olivine-600 transition-colors">
-                  {{ p.title }}
-                </h2>
-                <p v-if="p.subtitle" class="text-sm text-gray-600 line-clamp-2">
-                  {{ p.subtitle }}
-                </p>
-                <span class="text-lg font-medium text-olivine-700 mt-auto">
-                  {{ formatPrice(p) }}
-                </span>
-              </div>
+            <NuxtLink to="/shop/cart" class="btn-outline">
+              <ShoppingBag class="h-4 w-4" />
+              Корзина · {{ itemCount }}
             </NuxtLink>
-            <div class="px-5 pb-5">
-              <button
-                type="button"
-                class="w-full py-2 rounded-lg border border-olivine-200 text-olivine-700 text-sm font-medium hover:bg-olivine-50 disabled:opacity-50"
-                :disabled="adding === p.id"
-                @click="addToCart(p)"
-              >
-                {{ adding === p.id ? '…' : 'В корзину' }}
-              </button>
-            </div>
-          </li>
-        </ul>
-
-        <div
-          v-if="items.length"
-          class="mt-16 p-8 bg-olivine-50 rounded-2xl text-center max-w-3xl mx-auto"
-        >
-          <h3 class="text-xl font-semibold text-olivine-800 mb-3">Скоро открытие</h3>
-          <p class="text-olivine-600">
-            Подпишитесь на рассылку, чтобы первым узнать о появлении новых товаров
-          </p>
-          <div class="mt-6">
-            <FormsSubscribeInline />
           </div>
-        </div>
+        </Reveal>
+
+        <div v-if="loading" class="py-20 text-center text-muted-foreground">Загрузка каталога…</div>
+        <p v-else-if="error" class="py-20 text-center text-destructive">{{ error }}</p>
+
+        <ul v-else class="mt-12 grid list-none gap-6 p-0 sm:grid-cols-2 xl:grid-cols-3">
+          <Reveal v-for="(p, index) in items" :key="p.id" :delay="0.05 * index">
+            <li class="card-hover flex h-full flex-col overflow-hidden rounded-3xl border border-line bg-white">
+              <NuxtLink :to="`/shop/${p.slug}`" class="group flex flex-1 flex-col">
+                <div class="aspect-[4/3] overflow-hidden bg-paper-deep">
+                  <img
+                    v-if="p.preview_image?.path"
+                    :src="p.preview_image.path"
+                    :alt="p.title"
+                    class="img-zoom h-full w-full object-cover"
+                  />
+                  <div v-else class="flex h-full w-full items-center justify-center text-muted-foreground">
+                    <Image class="h-8 w-8" />
+                  </div>
+                </div>
+                <div class="flex flex-1 flex-col p-6">
+                  <p class="eyebrow">Авторская работа</p>
+                  <h3 class="mt-3 font-display text-2xl font-semibold leading-tight text-ink transition-colors group-hover:text-moss">
+                    {{ p.title }}
+                  </h3>
+                  <p v-if="p.subtitle" class="mt-3 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+                    {{ p.subtitle }}
+                  </p>
+                  <span class="mt-6 font-display text-xl font-semibold text-moss">
+                    {{ formatPrice(p) }}
+                  </span>
+                </div>
+              </NuxtLink>
+              <div class="px-6 pb-6">
+                <button
+                  type="button"
+                  class="btn-moss w-full justify-center disabled:cursor-wait disabled:opacity-50"
+                  :disabled="adding === p.id"
+                  @click="addToCart(p)"
+                >
+                  <ShoppingBag class="h-4 w-4" />
+                  {{ adding === p.id ? 'Добавляем…' : 'В корзину' }}
+                </button>
+              </div>
+            </li>
+          </Reveal>
+        </ul>
       </div>
     </section>
 
-    <section class="py-16 px-6 lg:px-12 bg-gray-50">
-      <div class="max-w-7xl mx-auto">
-        <h2 class="text-2xl font-bold text-gray-900 mb-8">Что будет в магазине</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div
-            v-for="(item, index) in [
-              {
-                title: 'Печатные работы',
-                description: 'Фотографии на профессиональной бумаге, холсте и алюминии',
-              },
-              {
-                title: 'Курсы',
-                description: 'Обучение пейзажной фотографии, обработке и композиции',
-              },
-              {
-                title: 'Пресеты',
-                description: 'Готовые настройки для Lightroom и Photoshop',
-              },
-            ]"
-            :key="index"
-            class="p-6 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300"
-          >
-            <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ item.title }}</h3>
-            <p class="text-gray-600">{{ item.description }}</p>
-          </div>
+    <section class="container-x py-20 sm:py-28">
+      <Reveal>
+        <p class="eyebrow">Коллекция</p>
+        <div class="mt-3 flex flex-wrap items-end justify-between gap-5">
+          <h2 class="display-1 text-4xl sm:text-5xl">
+            Что будет <em class="italic text-moss">в магазине</em>
+          </h2>
+          <p class="max-w-md text-[15px] leading-relaxed text-muted-foreground">
+            Всё, что помогает увидеть природу глубже и сохранить впечатление от неё надолго.
+          </p>
         </div>
+      </Reveal>
+
+      <div class="mt-12 grid gap-6 md:grid-cols-3">
+        <Reveal :delay="0.04">
+          <article class="group card-hover overflow-hidden rounded-3xl border border-line bg-white">
+            <div class="aspect-[4/3] overflow-hidden"><img src="/images/hero-shop.jpg" alt="Печатные работы" class="img-zoom h-full w-full object-cover" /></div>
+            <div class="p-6">
+              <Image class="h-5 w-5 text-moss" />
+              <h3 class="mt-4 font-display text-2xl font-semibold text-ink">Печатные работы</h3>
+              <p class="mt-3 text-sm leading-relaxed text-muted-foreground">Фотографии на профессиональной бумаге, холсте и алюминии.</p>
+            </div>
+          </article>
+        </Reveal>
+        <Reveal :delay="0.1">
+          <article class="group card-hover overflow-hidden rounded-3xl border border-line bg-white">
+            <div class="aspect-[4/3] overflow-hidden"><img src="/images/shop-courses.jpg" alt="Курсы по фотографии" class="img-zoom h-full w-full object-cover" /></div>
+            <div class="p-6">
+              <GraduationCap class="h-5 w-5 text-moss" />
+              <h3 class="mt-4 font-display text-2xl font-semibold text-ink">Курсы</h3>
+              <p class="mt-3 text-sm leading-relaxed text-muted-foreground">Обучение пейзажной фотографии, обработке и композиции.</p>
+            </div>
+          </article>
+        </Reveal>
+        <Reveal :delay="0.16">
+          <article class="group card-hover overflow-hidden rounded-3xl border border-line bg-white">
+            <div class="aspect-[4/3] overflow-hidden"><img src="/images/shop-presets.jpg" alt="Пресеты для обработки" class="img-zoom h-full w-full object-cover" /></div>
+            <div class="p-6">
+              <Wand2 class="h-5 w-5 text-moss" />
+              <h3 class="mt-4 font-display text-2xl font-semibold text-ink">Пресеты</h3>
+              <p class="mt-3 text-sm leading-relaxed text-muted-foreground">Готовые настройки для Lightroom и Photoshop.</p>
+              <span class="mt-5 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-moss">
+                Скоро <ArrowRight class="h-3.5 w-3.5" />
+              </span>
+            </div>
+          </article>
+        </Reveal>
       </div>
     </section>
   </div>

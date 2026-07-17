@@ -190,7 +190,7 @@ onUnmounted(() => {
       <!-- Загрузка метаданных -->
       <div
         v-if="!hasMetadata && !hasError"
-        class="absolute inset-0 z-1 bg-linear-to-br from-olivine-900/35 via-slate-900/90 to-slate-950"
+        class="absolute inset-0 z-1 bg-linear-to-br from-moss-900/35 via-slate-900/90 to-slate-950"
         aria-hidden="true"
       >
         <div
@@ -240,7 +240,7 @@ onUnmounted(() => {
         aria-hidden="true"
       >
         <div
-          class="h-9 w-9 animate-spin rounded-full border-2 border-white/30 border-t-olivine-400"
+          class="h-9 w-9 animate-spin rounded-full border-2 border-white/30 border-t-moss-400"
         />
       </div>
 
@@ -253,7 +253,7 @@ onUnmounted(() => {
         @click.stop="togglePlay"
       >
         <span
-          class="flex h-14 w-14 items-center justify-center rounded-full bg-olivine-500 text-white shadow-lg ring-4 ring-white/15 transition group-hover:scale-105 sm:h-16 sm:w-16"
+          class="flex h-14 w-14 items-center justify-center rounded-full bg-moss-500 text-white shadow-lg ring-4 ring-white/15 transition group-hover:scale-105 sm:h-16 sm:w-16"
         >
           <PlayIcon class="h-7 w-7 translate-x-0.5 sm:h-8 sm:w-8" aria-hidden="true" />
         </span>
@@ -274,7 +274,7 @@ onUnmounted(() => {
             max="100"
             step="0.1"
             :value="progressPercent"
-            class="site-video-range h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/20 accent-olivine-400 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-olivine-400 [&::-webkit-slider-thumb]:shadow [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-olivine-400"
+            class="site-video-range h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/20 accent-moss-400 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-moss-400 [&::-webkit-slider-thumb]:shadow [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-moss-400"
             @input="onSeekInput"
           />
         </label>
@@ -312,7 +312,7 @@ onUnmounted(() => {
               min="0"
               max="100"
               :value="isMuted ? 0 : volume * 100"
-              class="site-video-range-vol hidden h-1 w-20 max-w-20 cursor-pointer appearance-none rounded-full bg-white/20 accent-olivine-400 sm:block [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:w-2.5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-moz-range-thumb]:h-2.5 [&::-moz-range-thumb]:w-2.5 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-white"
+              class="site-video-range-vol hidden h-1 w-20 max-w-20 cursor-pointer appearance-none rounded-full bg-white/20 accent-moss-400 sm:block [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:w-2.5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-moz-range-thumb]:h-2.5 [&::-moz-range-thumb]:w-2.5 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-white"
               @input="onVolumeInput"
             />
           </div>

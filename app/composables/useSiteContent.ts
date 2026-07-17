@@ -90,7 +90,7 @@ export interface SiteShopPageContent {
 
 export function defaultSiteAbout(): SiteAboutContent {
   return {
-    portrait_image: '/about-portrait.jpg',
+    portrait_image: '/images/about-portrait.jpg',
     role_label: 'Фотограф / Путешественник',
     name_title: 'ИВАН МАМОНОВ',
     bio_paragraphs: [
@@ -131,7 +131,7 @@ export function defaultSiteContacts(): SiteContactsContent {
   return {
     hero_title: 'КОНТАКТЫ',
     hero_subtitle: 'Давайте создадим что-то прекрасное вместе',
-    hero_background_image: '/hero-blog.jpg',
+    hero_background_image: '/images/hero-blog.jpg',
     section_title: 'Свяжитесь со мной',
     email: 'hello@ivanmamonov.ru',
     phone_display: '+7 (900) 123-45-67',
@@ -159,7 +159,7 @@ export function defaultSiteContacts(): SiteContactsContent {
 
 export function defaultSiteBlogSection(): SiteBlogSectionContent {
   return {
-    hero_background_image: '/hero-blog.jpg',
+    hero_background_image: '/images/hero-blog.jpg',
     hero_title: 'БЛОГ',
     hero_subtitle:
       'Истории путешествий, фотографии и впечатления из самых красивых уголков России',
@@ -176,7 +176,7 @@ export function defaultSiteBlogSection(): SiteBlogSectionContent {
 
 export function defaultSiteEncyclopediaSection(): SiteEncyclopediaSectionContent {
   return {
-    hero_background_image: '/hero-encyclopedia.jpg',
+    hero_background_image: '/images/hero-encyclopedia.jpg',
     hero_title: 'ЭНЦИКЛОПЕДИЯ',
     hero_subtitle: 'ПРИМОРЬЯ — исторические места, природные локации и события Дальнего Востока',
     categories: [

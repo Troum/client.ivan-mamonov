@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ArrowRight, CheckCircle2, Clock3, LoaderCircle, ShoppingBag } from '@lucide/vue'
+
 const route = useRoute()
 const shopCart = useShopCart()
 
@@ -43,42 +45,86 @@ onUnmounted(() => {
   if (timer) clearInterval(timer)
 })
 
-const breadcrumbs = [
-  { label: 'Главная', to: '/' },
-  { label: 'Магазин', to: '/shop' },
-  { label: 'Оплата' },
-]
 </script>
 
 <template>
-  <div class="min-h-screen bg-white">
-    <AppBreadcrumbs :items="breadcrumbs" />
-    <div class="p-8 md:px-12 md:py-16 max-w-lg mx-auto text-center">
-      <h1 class="text-2xl font-extrabold uppercase text-gray-900 mb-6">Оплата</h1>
+  <div>
+    <PageHero
+      eyebrow="Статус заказа"
+      current="Оплата"
+      title="Статус оплаты"
+      title-html="Статус <em class=&quot;italic text-moss&quot;>оплаты</em>"
+      subtitle="Проверяем результат платежа и обновляем статус заказа автоматически."
+    />
 
-      <div v-if="!publicId" class="text-gray-600">
-        Не указан заказ. Перейдите в
-        <NuxtLink to="/shop" class="underline text-olivine-600">магазин</NuxtLink>.
-      </div>
+    <section class="container-x pb-24">
+      <Reveal>
+        <div class="mx-auto max-w-2xl overflow-hidden rounded-[2rem] border border-line bg-white">
+          <div v-if="!publicId" class="px-8 py-16 text-center sm:px-14">
+            <span class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-moss-wash text-moss">
+              <ShoppingBag class="h-7 w-7" />
+            </span>
+            <h2 class="mt-6 font-display text-3xl font-semibold text-ink">Заказ не указан</h2>
+            <p class="mt-3 text-sm leading-relaxed text-muted-foreground">
+              Вернитесь в магазин и оформите заказ, чтобы перейти к оплате.
+            </p>
+            <NuxtLink to="/shop" class="btn-moss mt-8">
+              В магазин
+              <ArrowRight class="h-4 w-4" />
+            </NuxtLink>
+          </div>
 
-      <div v-else class="space-y-4 text-gray-800">
-        <p v-if="orderNumber">Заказ <strong>{{ orderNumber }}</strong></p>
+          <div v-else class="px-8 py-16 text-center sm:px-14">
+            <template v-if="paymentStatus === 'succeeded'">
+              <span class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-moss text-white">
+                <CheckCircle2 class="h-8 w-8" />
+              </span>
+              <p class="eyebrow mt-7">Платёж подтверждён</p>
+              <h2 class="mt-3 font-display text-3xl font-semibold text-ink sm:text-4xl">
+                Спасибо за покупку!
+              </h2>
+              <p v-if="orderNumber" class="mt-4 text-sm text-muted-foreground">
+                Заказ <strong class="font-semibold text-ink">{{ orderNumber }}</strong>
+              </p>
+              <p class="mx-auto mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
+                Оплата прошла успешно. Информацию о заказе и дальнейших шагах отправим на указанный email.
+              </p>
+              <NuxtLink to="/shop" class="btn-moss mt-8">
+                Вернуться в каталог
+                <ArrowRight class="h-4 w-4" />
+              </NuxtLink>
+            </template>
 
-        <p v-if="loading && paymentStatus !== 'succeeded'" class="text-gray-500">Проверяем статус оплаты…</p>
-
-        <template v-if="paymentStatus === 'succeeded'">
-          <p class="text-xl text-emerald-600">Оплата прошла успешно. Спасибо!</p>
-          <NuxtLink to="/shop" class="inline-block mt-6 underline text-olivine-600"> В каталог </NuxtLink>
-        </template>
-
-        <template v-else-if="!loading">
-          <p class="text-gray-600">
-            Если вы уже оплатили, статус обновится через несколько секунд. Иначе завершите оплату в окне банка или
-            начните заново.
-          </p>
-          <NuxtLink to="/shop/cart" class="inline-block mt-4 underline text-olivine-600"> Корзина </NuxtLink>
-        </template>
-      </div>
-    </div>
+            <template v-else>
+              <span class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-moss-wash text-moss">
+                <LoaderCircle v-if="loading" class="h-8 w-8 animate-spin" />
+                <Clock3 v-else class="h-8 w-8" />
+              </span>
+              <p class="eyebrow mt-7">Ожидаем подтверждение</p>
+              <h2 class="mt-3 font-display text-3xl font-semibold text-ink sm:text-4xl">
+                Проверяем оплату
+              </h2>
+              <p v-if="orderNumber" class="mt-4 text-sm text-muted-foreground">
+                Заказ <strong class="font-semibold text-ink">{{ orderNumber }}</strong>
+              </p>
+              <p class="mx-auto mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
+                Если вы уже оплатили, статус обновится через несколько секунд. Не закрывайте эту страницу.
+              </p>
+              <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+                <NuxtLink to="/shop/cart" class="btn-outline justify-center">
+                  <ShoppingBag class="h-4 w-4" />
+                  Вернуться в корзину
+                </NuxtLink>
+              </div>
+            </template>
+          </div>
+          <div class="border-t border-line bg-paper-deep/50 px-6 py-4 text-center">
+            <p class="text-xs text-muted-foreground">
+              Статус обновляется автоматически каждые несколько секунд
+            </p>
+          </div>
+        </div>
+      </Reveal>
+    </section>
   </div>
 </template>

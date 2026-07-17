@@ -1,5 +1,17 @@
 <script setup lang="ts">
+import { ArrowRight, Check } from '@lucide/vue'
 import { object, string, type InferType } from 'yup'
+
+const props = withDefaults(
+  defineProps<{
+    dark?: boolean
+    compact?: boolean
+  }>(),
+  {
+    dark: false,
+    compact: false,
+  },
+)
 
 const { subscribeNewsletter } = usePublicApi()
 
@@ -39,7 +51,9 @@ async function onSubmit() {
     const isNew = res.data?.is_new_subscriber !== false
     successMsg.value =
       res.message ||
-      (isNew ? 'Спасибо! Мы будем присылать новости на указанный адрес.' : 'Этот адрес уже есть в нашей рассылке.')
+      (isNew
+        ? 'Готово! Вы первым узнаете о новых материалах.'
+        : 'Этот адрес уже есть в нашей рассылке.')
     email.value = ''
   } catch (err: unknown) {
     if (err && typeof err === 'object' && 'errors' in err) {
@@ -54,22 +68,52 @@ async function onSubmit() {
 </script>
 
 <template>
-  <form class="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto" @submit.prevent="onSubmit">
-    <input
-      v-model="email"
-      type="email"
-      required
-      placeholder="Ваш email"
-      class="flex-1 px-4 py-3 rounded-lg border border-olivine-200 focus:outline-none focus:ring-2 focus:ring-olivine-400 bg-white"
-    />
-    <button
-      type="submit"
-      :disabled="submitting"
-      class="px-6 py-3 bg-olivine-500 text-white font-medium rounded-lg hover:bg-olivine-600 transition-colors duration-200 disabled:opacity-50"
+  <div class="w-full">
+    <div
+      v-if="successMsg"
+      :class="[
+        'flex items-center gap-3 rounded-2xl border px-5',
+        compact ? 'py-3' : 'py-4',
+        dark
+          ? 'border-white/15 bg-white/5 text-paper'
+          : 'border-moss/25 bg-moss-wash text-moss-dark',
+      ]"
     >
-      {{ submitting ? '…' : 'Подписаться' }}
-    </button>
-    <p v-if="errorMsg" class="text-red-600 text-sm w-full text-center sm:col-span-2">{{ errorMsg }}</p>
-    <p v-if="successMsg" class="text-emerald-700 text-sm w-full text-center sm:col-span-2">{{ successMsg }}</p>
-  </form>
+      <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-moss text-white">
+        <Check class="h-4 w-4" />
+      </span>
+      <p class="text-sm font-medium">{{ successMsg }}</p>
+    </div>
+
+    <form v-else class="w-full" @submit.prevent="onSubmit">
+      <div
+        :class="[
+          'flex items-center gap-2 rounded-full border p-1.5 pl-5 transition-colors focus-within:border-moss',
+          dark ? 'border-white/15 bg-white/5' : 'border-line bg-white',
+        ]"
+      >
+        <input
+          v-model="email"
+          type="email"
+          required
+          placeholder="Ваш email"
+          :class="[
+            'w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground/70',
+            dark ? 'text-paper' : 'text-ink',
+          ]"
+        />
+        <button
+          type="submit"
+          :disabled="submitting"
+          class="group inline-flex shrink-0 items-center gap-2 rounded-full bg-moss px-5 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-moss-dark disabled:opacity-50"
+        >
+          {{ submitting ? '…' : 'Подписаться' }}
+          <ArrowRight
+            class="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5"
+          />
+        </button>
+      </div>
+      <p v-if="errorMsg" class="mt-2 text-sm text-red-500">{{ errorMsg }}</p>
+    </form>
+  </div>
 </template>

@@ -1,8 +1,14 @@
 <script setup lang="ts">
+import { ArrowRight, Check } from '@lucide/vue'
 import { object, string, type InferType } from 'yup'
 
 const props = defineProps<{
   theme: string | undefined
+  themeLabel?: string
+}>()
+
+const emit = defineEmits<{
+  reset: []
 }>()
 
 const { submitFeedback } = usePublicApi()
@@ -30,7 +36,7 @@ watch(
   () => props.theme,
   (t) => {
     if (t) themeField.value = t
-  }
+  },
 )
 
 function validationMessage(err: unknown): string {
@@ -72,49 +78,84 @@ async function onSubmit() {
     submitting.value = false
   }
 }
+
+function resetForm() {
+  success.value = false
+  errorMsg.value = null
+  message.value = ''
+  emit('reset')
+}
 </script>
 
 <template>
-  <form class="space-y-4" @submit.prevent="onSubmit">
-    <div v-if="success" class="rounded-lg bg-emerald-50 text-emerald-900 px-4 py-3 text-sm">
-      Мы получили ваше сообщение и свяжемся с вами по e-mail.
-    </div>
-    <p v-if="errorMsg" class="text-red-600 text-sm">{{ errorMsg }}</p>
-
-    <div>
-      <label for="fb-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-      <input
-        id="fb-email"
-        v-model="email"
-        type="email"
-        required
-        autocomplete="email"
-        class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-olivine-400 bg-white"
-        placeholder="you@example.com"
-      />
-    </div>
-
-    <input v-model="themeField" type="hidden" name="theme" />
-
-    <div>
-      <label for="fb-message" class="block text-sm font-medium text-gray-700 mb-1">Сообщение</label>
-      <textarea
-        id="fb-message"
-        v-model="message"
-        required
-        rows="4"
-        class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-olivine-400 bg-white resize-none"
-        placeholder="Ваше сообщение…"
-      />
-    </div>
-
-    <button
-      type="submit"
-      :disabled="submitting"
-      class="w-full py-3 px-6 bg-olivine-500 text-white font-medium rounded-lg hover:bg-olivine-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+  <div>
+    <div
+      v-if="success"
+      class="flex min-h-[420px] flex-col items-center justify-center text-center"
     >
-      <span v-if="submitting" class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-      {{ submitting ? 'Отправка…' : 'Отправить' }}
-    </button>
-  </form>
+      <span class="flex h-16 w-16 items-center justify-center rounded-full bg-moss text-white">
+        <Check class="h-7 w-7" />
+      </span>
+      <h3 class="mt-7 font-display text-3xl font-semibold text-ink">Сообщение отправлено</h3>
+      <p class="mt-3 max-w-sm text-[15px] leading-relaxed text-muted-foreground">
+        Спасибо! Я свяжусь с вами в ближайшее время
+        <template v-if="themeLabel"> по теме «{{ themeLabel.toLowerCase() }}»</template>.
+      </p>
+      <button
+        type="button"
+        class="link-underline mt-8 text-[13.5px] font-semibold text-moss"
+        @click="resetForm"
+      >
+        Отправить ещё одно сообщение
+      </button>
+    </div>
+
+    <form v-else @submit.prevent="onSubmit">
+      <h3 class="font-display text-2xl font-semibold text-ink">Отправить сообщение</h3>
+
+      <slot name="themes" />
+
+      <p v-if="errorMsg" class="mt-4 text-sm text-red-600">{{ errorMsg }}</p>
+
+      <input v-model="themeField" type="hidden" name="theme" />
+
+      <label class="mt-7 block">
+        <span class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          Email
+        </span>
+        <input
+          v-model="email"
+          type="email"
+          required
+          autocomplete="email"
+          placeholder="you@example.com"
+          class="mt-2.5 w-full rounded-2xl border border-line bg-paper px-5 py-3.5 text-[15px] text-ink outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-moss"
+        />
+      </label>
+
+      <label class="mt-5 block">
+        <span class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          Сообщение
+        </span>
+        <textarea
+          v-model="message"
+          required
+          rows="5"
+          placeholder="Расскажите о вашей идее или задаче…"
+          class="mt-2.5 w-full resize-none rounded-2xl border border-line bg-paper px-5 py-3.5 text-[15px] text-ink outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-moss"
+        />
+      </label>
+
+      <button
+        type="submit"
+        :disabled="submitting"
+        class="group mt-7 flex w-full items-center justify-center gap-2 rounded-full bg-moss px-7 py-4 text-[14.5px] font-semibold text-white transition-colors hover:bg-moss-dark disabled:opacity-50"
+      >
+        {{ submitting ? 'Отправка…' : 'Отправить сообщение' }}
+        <ArrowRight
+          class="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
+        />
+      </button>
+    </form>
+  </div>
 </template>

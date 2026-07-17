@@ -13,17 +13,17 @@ const hoverClass = computed(() => {
   if (props.variant === 'footer') return ''
   const m: Record<string, string> = {
     instagram: 'hover:bg-pink-50 hover:text-pink-600',
-    telegram: 'hover:bg-olivine-100 hover:text-blue-500',
+    telegram: 'hover:bg-moss-100 hover:text-blue-500',
     vk: 'hover:bg-blue-50 hover:text-blue-700',
     youtube: 'hover:bg-red-50 hover:text-red-600',
-    website: 'hover:bg-olivine-100 hover:text-olivine-700',
+    website: 'hover:bg-moss-100 hover:text-moss-700',
   }
   return m[props.platform] ?? 'hover:bg-gray-200 hover:text-gray-900'
 })
 
 const buttonClass = computed(() => {
   if (props.variant === 'footer') {
-    return 'w-10 h-10 bg-olivine-900 rounded-full flex items-center justify-center text-olivine-200 hover:bg-olivine-500 hover:text-white transition-all duration-300'
+    return 'w-10 h-10 bg-moss-900 rounded-full flex items-center justify-center text-moss-200 hover:bg-moss-500 hover:text-white transition-all duration-300'
   }
   return `w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 transition-all duration-300 ${hoverClass.value}`
 })

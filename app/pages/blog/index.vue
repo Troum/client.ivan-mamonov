@@ -1,8 +1,17 @@
 <script setup lang="ts">
-import { ExclamationCircleIcon } from '@heroicons/vue/24/outline'
+import {
+  ArrowUpRight,
+  CalendarDays,
+  Camera,
+  Clock3,
+  Compass,
+  Feather,
+  Route,
+} from '@lucide/vue'
 import type { Post } from '~/interfaces/Post'
 import { useFilters } from '~/composables/useFilters'
 import { defaultSiteBlogSection, loadSiteBlogSection } from '~/composables/useSiteContent'
+import { resolvePublicMediaUrl } from '~/composables/usePageSeo'
 
 const contentApi = useContentApi()
 const { formatCoordinates } = useFilters()
@@ -13,18 +22,15 @@ const { data: sectionData } = await useAsyncData('site-blog-section', () => load
 
 const blogSection = computed(() => sectionData.value ?? defaultSiteBlogSection())
 
-const posts = ref<Post[]>([])
-const hoveredPost = ref<string | null>(null)
+const { data: postsData } = await useAsyncData('blog-posts', () => contentApi.fetchPosts())
 
-contentApi.fetchPosts().then((rows) => {
-  posts.value = rows as unknown as Post[]
-})
+const posts = computed(() => (postsData.value ?? []) as unknown as Post[])
 
 const s = blogSection.value
 usePageSeo(s.seo, {
   title: s.seo.meta_title?.trim() || s.hero_title || 'Блог — Иван Мамонов',
   description: s.seo.meta_description?.trim() || s.hero_subtitle,
-  ogImage: s.seo.og_image?.trim() || s.hero_background_image,
+  ogImage: s.seo.og_image?.trim() || s.hero_background_image || '/images/hero-blog.jpg',
 })
 
 function formatPublished(p: Post) {
@@ -43,137 +49,163 @@ function locationLine(p: Post) {
     return formatCoordinates(
       { lat: Number(c.latitude), lng: Number(c.longitude) },
       c.latitude_label ?? 'N',
-      c.longitude_label ?? 'E'
+      c.longitude_label ?? 'E',
     )
   }
   return ''
 }
 
-function excerptLine(p: Post) {
-  const sub = p.subtitle?.trim()
-  if (sub) return sub
-  return 'История путешествия и снимки с маршрута.'
-}
-
 function previewPath(p: Post) {
   const img = p.preview_image
-  if (img && typeof img === 'object' && 'path' in img && img.path) return String(img.path)
-  return ''
+  if (img && typeof img === 'object' && 'path' in img && img.path) {
+    return resolvePublicMediaUrl(String(img.path))
+  }
+  return '/images/blog-baikal.jpg'
 }
 
-function titleParts(title: string) {
-  const t = title.trim()
-  const space = t.indexOf(' ')
-  if (space === -1) return { first: t, rest: '' }
-  return { first: t.slice(0, space), rest: t.slice(space) }
-}
-
-const breadcrumbs = [
-  { label: 'Главная', to: '/' },
-  { label: 'Блог' },
+const TEASERS = [
+  {
+    icon: Route,
+    title: 'Истории путешествий',
+    desc: 'Маршруты по Приморью, Сибири и Кавказу — от идеи до финального кадра.',
+  },
+  {
+    icon: Camera,
+    title: 'Закулисье съёмок',
+    desc: 'Как рождаются снимки: ночёвки в тайге, рассветы на скалах и работа со светом.',
+  },
+  {
+    icon: Compass,
+    title: 'Гиды по локациям',
+    desc: 'Проверенные точки для пейзажной съёмки с координатами и советами.',
+  },
 ]
+
+const heroImage = computed(
+  () =>
+    resolvePublicMediaUrl(blogSection.value.hero_background_image) || '/images/hero-blog.jpg',
+)
 </script>
 
 <template>
-  <div class="min-h-screen bg-white">
-    <AppBreadcrumbs :items="breadcrumbs" />
-    <SiteSectionHero
-      variant="blog"
-      :background-image="blogSection.hero_background_image"
-      :title="blogSection.hero_title"
-      :subtitle="blogSection.hero_subtitle"
+  <div>
+    <PageHero
+      eyebrow="Блог"
+      current="Блог"
+      :image="heroImage"
+      title-html="Истории <em class=&quot;italic text-moss&quot;>путешествий</em>"
+      title="Истории путешествий"
+      :subtitle="
+        blogSection.hero_subtitle ||
+        'Фотографии и впечатления из самых красивых уголков России.'
+      "
     />
 
-    <section class="py-16 lg:py-24 px-6 lg:px-12 max-w-7xl mx-auto">
-      <div
-        v-if="posts.length === 0"
-        class="flex flex-col items-center justify-center py-24 text-center"
-      >
-        <div class="w-24 h-24 bg-olivine-50 rounded-full flex items-center justify-center mb-6">
-          <ExclamationCircleIcon class="w-10 h-10 text-olivine-300" />
-        </div>
-        <h2 class="text-2xl font-semibold text-gray-400">
-          Пока нет записей
-        </h2>
-        <p class="mt-3 text-gray-400 max-w-md">
-          Мы работаем над наполнением блога. Скоро здесь появятся истории путешествий и снимки с маршрутов.
-        </p>
-      </div>
-      <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-        <article
-          v-for="(post, index) in posts"
-          :key="post.slug"
-          class="group cursor-pointer"
-          :class="index === 0 ? 'lg:col-span-2' : ''"
-          @mouseenter="hoveredPost = post.slug"
-          @mouseleave="hoveredPost = null"
-        >
-          <NuxtLink :to="`/blog/${post.slug}`" class="block">
-            <div
-              :class="[
-                'relative overflow-hidden bg-gray-100',
-                index === 0 ? 'aspect-21/9' : 'aspect-16/10',
-              ]"
-            >
+    <section v-if="posts.length > 0" class="container-x pb-16">
+      <Reveal>
+        <div class="grid gap-6">
+          <NuxtLink
+            v-for="(post, index) in posts"
+            :key="post.slug"
+            :to="`/blog/${post.slug}`"
+            class="group card-hover grid overflow-hidden rounded-[2rem] border border-line bg-white md:grid-cols-[1.1fr_1fr]"
+          >
+            <div class="relative min-h-[260px] overflow-hidden">
               <img
-                v-if="previewPath(post)"
                 :src="previewPath(post)"
                 :alt="post.title"
-                :class="[
-                  'w-full h-full object-cover transition-transform duration-700',
-                  hoveredPost === post.slug ? 'scale-105' : 'scale-100',
-                ]"
+                loading="lazy"
+                class="img-zoom absolute inset-0 h-full w-full object-cover"
               />
-              <div v-else class="w-full h-full bg-linear-to-br from-olivine-200 to-olivine-700" />
-
-              <div
-                :class="[
-                  'absolute inset-0 bg-black/20 transition-opacity duration-300',
-                  hoveredPost === post.slug ? 'opacity-0' : 'opacity-100',
-                ]"
-              />
+              <span
+                v-if="index === 0"
+                class="absolute left-5 top-5 rounded-full bg-ink/55 px-3.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur-md"
+              >
+                Новая запись
+              </span>
             </div>
-
-            <div class="mt-6">
-              <div class="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-3">
-                <span v-if="formatPublished(post)" class="flex items-center gap-1.5">
-                  <HeroUiIcon name="i-heroicons-calendar-days" icon-class="w-4 h-4" />
+            <div class="flex flex-col justify-center p-8 sm:p-10">
+              <div
+                class="flex flex-wrap items-center gap-4 text-[12.5px] font-medium text-muted-foreground"
+              >
+                <span v-if="formatPublished(post)" class="inline-flex items-center gap-1.5">
+                  <CalendarDays class="h-3.5 w-3.5 text-moss" />
                   {{ formatPublished(post) }}
                 </span>
-                <span v-if="locationLine(post)" class="flex items-center gap-1.5">
-                  <HeroUiIcon name="i-heroicons-map-pin" icon-class="w-4 h-4" />
+                <span v-if="locationLine(post)" class="inline-flex items-center gap-1.5">
+                  <Clock3 class="h-3.5 w-3.5 text-moss" />
                   {{ locationLine(post) }}
                 </span>
               </div>
-
               <h2
-                :class="[
-                  'font-bold tracking-tight text-gray-900 group-hover:text-olivine-600 transition-colors duration-300',
-                  index === 0 ? 'text-3xl lg:text-4xl xl:text-5xl' : 'text-2xl lg:text-3xl',
-                ]"
+                class="mt-4 font-display text-3xl font-semibold leading-tight text-ink transition-colors group-hover:text-moss sm:text-4xl"
               >
-                <span class="text-olivine-400">{{ titleParts(post.title).first }}</span
-                >{{ titleParts(post.title).rest }}
+                {{ post.title }}
               </h2>
-
-              <p class="mt-3 text-gray-600 leading-relaxed max-w-2xl">
-                {{ excerptLine(post) }}
+              <p
+                v-if="post.subtitle"
+                class="mt-3 text-[15px] leading-relaxed text-muted-foreground"
+              >
+                {{ post.subtitle }}
               </p>
-
-              <div class="mt-4 flex items-center gap-2 text-olivine-500 font-medium">
-                <span>Читать далее</span>
-                <HeroUiIcon
-                  name="i-heroicons-arrow-right"
-                  :icon-class="
-                    ['w-4 h-4 transition-transform duration-300', hoveredPost === post.slug ? 'translate-x-1' : ''].join(
-                      ' '
-                    )
-                  "
+              <span class="mt-6 inline-flex items-center gap-2 text-[14px] font-semibold text-moss">
+                Читать запись
+                <ArrowUpRight
+                  class="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
                 />
-              </div>
+              </span>
             </div>
           </NuxtLink>
-        </article>
+        </div>
+      </Reveal>
+    </section>
+
+    <section class="container-x pb-24">
+      <Reveal>
+        <div
+          class="relative overflow-hidden rounded-[2rem] border border-dashed border-line bg-white/70 px-8 py-16 text-center sm:py-20"
+        >
+          <div
+            class="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-moss-wash/60 to-transparent"
+            aria-hidden="true"
+          />
+          <span
+            class="relative mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-moss-wash text-moss"
+          >
+            <Feather class="h-7 w-7" />
+          </span>
+          <h2 class="relative mt-7 font-display text-3xl font-semibold text-ink sm:text-4xl">
+            Дальше — больше
+          </h2>
+          <p
+            class="relative mx-auto mt-4 max-w-md text-[15.5px] leading-relaxed text-ink-soft"
+          >
+            Мы работаем над наполнением блога. Скоро здесь появятся новые истории путешествий и
+            снимки с маршрутов.
+          </p>
+          <div class="relative mx-auto mt-9 max-w-md">
+            <FormsSubscribeInline />
+            <p class="mt-3 text-[12.5px] text-muted-foreground">
+              Подпишитесь, чтобы не пропустить следующую публикацию
+            </p>
+          </div>
+        </div>
+      </Reveal>
+
+      <div class="mt-16 grid gap-5 md:grid-cols-3">
+        <Reveal v-for="(t, i) in TEASERS" :key="t.title" :delay="0.07 * i">
+          <div
+            class="group h-full rounded-3xl border border-line bg-white p-7 transition-all duration-500 hover:border-moss/40 hover:shadow-[0_20px_40px_-24px_rgb(27_30_23/0.2)]"
+          >
+            <span
+              class="flex h-12 w-12 items-center justify-center rounded-2xl bg-moss-wash text-moss transition-colors duration-500 group-hover:bg-moss group-hover:text-white"
+            >
+              <component :is="t.icon" class="h-5 w-5" />
+            </span>
+            <h3 class="mt-5 font-display text-[21px] font-semibold text-ink">{{ t.title }}</h3>
+            <p class="mt-2.5 text-[14.5px] leading-relaxed text-muted-foreground">{{ t.desc }}</p>
+          </div>
+        </Reveal>
       </div>
     </section>
   </div>

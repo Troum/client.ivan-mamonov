@@ -105,12 +105,12 @@ function markerSettings(m: { lng: number; lat: number; title: string }) {
 </script>
 
 <template>
-  <div>
+  <div class="h-full w-full">
     <div
       v-if="showMapboxMap && mapboxOptions"
-      class="relative h-[min(520px,70vh)] w-full min-h-[280px] max-h-[640px] overflow-hidden rounded-2xl border border-slate-200 bg-neutral-200 grayscale"
+      class="relative h-full min-h-[280px] w-full overflow-hidden bg-paper-deep"
     >
-      <MapboxMap :map-id="mapboxMapId" class="rounded-2xl" :options="mapboxOptions">
+      <MapboxMap :map-id="mapboxMapId" class="h-full w-full" :options="mapboxOptions">
         <MapboxDefaultMarker
           v-for="m in points"
           :key="m.id"
@@ -122,10 +122,10 @@ function markerSettings(m: { lng: number; lat: number; title: string }) {
 
     <div
       v-else-if="showYandexMap"
-      class="relative h-[min(520px,70vh)] w-full min-h-[280px] max-h-[640px] overflow-hidden rounded-2xl border border-slate-200 bg-neutral-200"
+      class="relative h-full min-h-[280px] w-full overflow-hidden bg-paper-deep"
     >
       <YandexMap
-        class="h-full w-full rounded-2xl"
+        class="h-full w-full"
         width="100%"
         height="100%"
         :settings="yandexMapSettings"
@@ -142,19 +142,19 @@ function markerSettings(m: { lng: number; lat: number; title: string }) {
 
     <div
       v-else-if="points.length === 0"
-      class="flex h-[min(400px,50vh)] min-h-[240px] w-full flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 text-center text-sm text-slate-600"
+      class="flex h-full min-h-[240px] w-full flex-col items-center justify-center gap-3 bg-paper px-4 text-center text-sm text-muted-foreground"
     >
       <p>Пока нет точек на карте. Они появятся после добавления меток в админке.</p>
     </div>
 
     <div
       v-else
-      class="flex h-[min(400px,50vh)] min-h-[240px] w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 text-center text-sm text-slate-600"
+      class="flex h-full min-h-[240px] w-full flex-col items-center justify-center gap-2 bg-paper px-4 text-center text-sm text-muted-foreground"
     >
       <p>
-        Для карты добавьте в <code class="rounded bg-slate-200 px-1 py-0.5 text-xs">.env</code> токен Mapbox
-        (<code class="rounded bg-slate-200 px-1 py-0.5 text-xs">PUBLIC_MAPBOX_ACCESS_TOKEN</code>) или ключ Яндекс.Карт
-        (<code class="rounded bg-slate-200 px-1 py-0.5 text-xs">PUBLIC_YANDEX_MAPS_API_KEY</code>).
+        Для карты добавьте в <code class="rounded bg-paper-deep px-1 py-0.5 text-xs">.env</code> токен Mapbox
+        (<code class="rounded bg-paper-deep px-1 py-0.5 text-xs">PUBLIC_MAPBOX_ACCESS_TOKEN</code>) или ключ Яндекс.Карт
+        (<code class="rounded bg-paper-deep px-1 py-0.5 text-xs">PUBLIC_YANDEX_MAPS_API_KEY</code>).
       </p>
     </div>
   </div>

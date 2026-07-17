@@ -1,10 +1,16 @@
 <script setup lang="ts">
-import { useRoute } from 'vue-router'
-import { ref, computed } from 'vue'
+import {
+  ArrowLeft,
+  CalendarDays,
+  ChevronRight,
+  Globe2,
+  Images,
+  MapPin,
+  Tag,
+} from '@lucide/vue'
 import type { Encyclopedia } from '~/interfaces/Encyclopedia'
 import { resolvePublicMediaUrl } from '~/composables/usePageSeo'
 import { useFilters } from '~/composables/useFilters'
-import AppBreadcrumbs from "~/components/AppBreadcrumbs.vue";
 
 const nuxtApp = useNuxtApp()
 const route = useRoute()
@@ -27,11 +33,11 @@ const hasYandexMapsKey = computed(() => {
 })
 
 const mapboxMapId = computed(() =>
-  `ency-map-${String(route.params.slug ?? 'page').replace(/[^a-zA-Z0-9-_]/g, '-')}`
+  `ency-map-${String(route.params.slug ?? 'page').replace(/[^a-zA-Z0-9-_]/g, '-')}`,
 )
 
 const mapboxMarkerId = computed(() =>
-  `ency-marker-${String(route.params.slug ?? 'page').replace(/[^a-zA-Z0-9-_]/g, '-')}`
+  `ency-marker-${String(route.params.slug ?? 'page').replace(/[^a-zA-Z0-9-_]/g, '-')}`,
 )
 
 const contentApi = useContentApi()
@@ -39,7 +45,7 @@ const contentApi = useContentApi()
 const { data: post, error: postError } = await useAsyncData(
   `encyclopedia-${String(route.params.slug ?? '')}`,
   () => contentApi.fetchEncyclopediaBySlug(String(route.params.slug ?? '')),
-  { server: false, watch: [() => route.params.slug] }
+  { server: false, watch: [() => route.params.slug] },
 )
 
 if (postError.value || !post.value) {
@@ -56,13 +62,14 @@ const carouselItems = computed(() => {
   return []
 })
 
-const galleryPaths = computed(() => carouselItems.value.map((i) => i.path))
+const galleryPaths = computed(() =>
+  carouselItems.value.map((i) => resolvePublicMediaUrl(i.path)),
+)
 
-/** Обложка hero — preview_image (кадрируется в админке), не первое фото галереи. */
 const heroImageSrc = computed(() => {
   const p = post.value as Encyclopedia | null
   if (!p) return ''
-  if (p.preview_image?.path) return p.preview_image.path
+  if (p.preview_image?.path) return resolvePublicMediaUrl(p.preview_image.path)
   return galleryPaths.value[0] ?? ''
 })
 
@@ -77,7 +84,6 @@ const coordPair = computed(() => {
   }
 })
 
-/** Только если с API пришла готовая строка без числовых lat/lng (редкий случай). */
 const coordLabelFallback = computed(() => {
   if (coordPair.value) return ''
   const c = (post.value as Encyclopedia | null)?.coordinates
@@ -98,7 +104,7 @@ const mapboxOptions = computed(() => {
 const showMapboxMap = computed(() => hasMapboxToken.value && !!mapboxOptions.value)
 
 const showYandexMap = computed(
-  () => !showMapboxMap.value && hasYandexMapsKey.value && !!coordPair.value
+  () => !showMapboxMap.value && hasYandexMapsKey.value && !!coordPair.value,
 )
 
 const markerLngLat = computed((): [number, number] => {
@@ -114,19 +120,19 @@ function openInMap(lat: number, lng: number) {
 
 function categoryBadgeLabel(category: string | null | undefined): string {
   const c = category?.trim()
-  if (!c) return 'МЕСТО ПРИМОРЬЯ'
-  if (c === 'nature') return 'ПРИРОДНАЯ ЛОКАЦИЯ'
-  if (c === 'history') return 'ИСТОРИЧЕСКОЕ МЕСТО'
-  if (c === 'events') return 'СОБЫТИЕ'
-  return c.toUpperCase()
+  if (!c) return 'Материал'
+  if (c === 'nature') return 'Природная локация'
+  if (c === 'history') return 'Историческое место'
+  if (c === 'events') return 'Событие'
+  return c
 }
 
 function categoryShortLabel(category: string | null | undefined): string {
   const c = category?.trim()
   if (!c) return '—'
-  if (c === 'nature') return 'ПРИРОДА'
-  if (c === 'history') return 'ИСТОРИЯ'
-  if (c === 'events') return 'СОБЫТИЯ'
+  if (c === 'nature') return 'Природа'
+  if (c === 'history') return 'История'
+  if (c === 'events') return 'События'
   return c
 }
 
@@ -153,64 +159,21 @@ async function loadLocationLabel() {
   }
 }
 
-watch(coordPair, () => {
-  void loadLocationLabel()
-}, { immediate: true })
+watch(
+  coordPair,
+  () => {
+    void loadLocationLabel()
+  },
+  { immediate: true },
+)
 
-type StatCard = { icon: string; title: string; text: string; map?: boolean; isCoordinates?: boolean }
-
-const statCards = computed((): StatCard[] => {
-  const p = post.value as Encyclopedia | null
-  if (!p) return []
-  const cards: StatCard[] = []
-  if (coordPair.value && (locationLabel.value.trim() || locationLoading.value)) {
-    cards.push({
-      icon: 'i-heroicons-map-pin',
-      title: 'Локация',
-      text: locationLabel.value.trim() || '…',
-    })
-  }
-  cards.push({
-    icon: 'i-heroicons-tag',
-    title: 'Категория',
-    text: categoryShortLabel(p.category),
-  })
-  if (coordPair.value || coordLabelFallback.value) {
-    cards.push({
-      icon: 'i-heroicons-globe-alt',
-      title: 'Координаты',
-      text: coordLabelFallback.value,
-      map: !!coordPair.value,
-      isCoordinates: !!coordPair.value,
-    })
-  }
-  if (p.published_at) {
-    const fd = formatPublished(p.published_at)
-    if (fd) cards.push({ icon: 'i-heroicons-calendar-days', title: 'Опубликовано', text: fd })
-  }
-  return cards
-})
-
-const gridClass = 'grid-cols-2 lg:grid-cols-4'
-
-const breadcrumbs = computed(() => {
-  const p = post.value as Encyclopedia | null
-  const title = p?.title?.trim() || 'Статья'
-  return [
-    { label: 'Главная', to: '/' },
-    { label: 'Энциклопедия', to: '/encyclopedia' },
-    { label: title },
-  ]
-})
-
-/** Видеофайлы из админки (не встроены в Tiptap-контент). */
 const attachedVideos = computed(() => {
   const p = post.value as Encyclopedia | null
   if (!p) return []
   const list = p.videos
   if (!Array.isArray(list) || list.length === 0) return []
   return list.filter((v): v is { id: number; path: string } =>
-    Boolean(v && typeof v.path === 'string' && v.path.trim() !== '')
+    Boolean(v && typeof v.path === 'string' && v.path.trim() !== ''),
   )
 })
 
@@ -218,239 +181,347 @@ function encyclopediaVideoSrc(path: string): string {
   return resolvePublicMediaUrl(path.trim())
 }
 
-const isBreadcrumbCollapsed = ref(false)
-const BREADCRUMB_COLLAPSE_Y = 96
+const publishedLabel = computed(() =>
+  formatPublished((post.value as Encyclopedia | null)?.published_at),
+)
 
-function handleBreadcrumbScroll() {
-  isBreadcrumbCollapsed.value = window.scrollY > BREADCRUMB_COLLAPSE_Y
-}
-
-onMounted(() => {
-  window.addEventListener('scroll', handleBreadcrumbScroll, { passive: true })
-  handleBreadcrumbScroll()
-})
-
-onUnmounted(() => {
-  window.removeEventListener('scroll', handleBreadcrumbScroll)
-})
-
-watch(
-  () => route.params.slug,
-  () => {
-    isBreadcrumbCollapsed.value = false
-  }
+usePageSeo(
+  {
+    meta_title: '',
+    meta_description: '',
+    og_title: '',
+    og_description: '',
+    og_image: '',
+  },
+  {
+    title: `${(post.value as Encyclopedia).title} — энциклопедия`,
+    description: (post.value as Encyclopedia).subtitle || '',
+    ogImage: heroImageSrc.value || undefined,
+  },
 )
 </script>
 
 <template>
-  <div v-if="post" class="min-h-screen bg-white">
-    <div
-      class="pointer-events-none fixed top-28 lg:top-32 left-4 z-30 lg:left-12 transition-[opacity,transform] duration-300 ease-out"
-      :class="
-        isBreadcrumbCollapsed
-          ? 'pointer-events-none -translate-y-3 opacity-0'
-          : 'translate-y-0 opacity-100'
-      "
-    >
-      <div
-        class="pointer-events-auto flex w-fit max-w-[calc(100vw-2rem)] flex-col items-start gap-2 transition-[opacity,transform] duration-300 ease-out lg:max-w-[calc(100vw-6rem)]"
-        :class="isBreadcrumbCollapsed ? 'pointer-events-none scale-[0.98]' : 'scale-100'"
-      >
-        <span
-          class="mb-3 inline-block shrink-0 rounded-full bg-olivine-500 px-4 py-1.5 text-xs font-medium tracking-wider text-white uppercase shadow-sm"
-        >
-          {{ categoryBadgeLabel(post.category as any) }}
-        </span>
-        <AppBreadcrumbs :items="breadcrumbs" :fixed="false" />
-      </div>
-    </div>
-
-    <section class="relative h-[55vh] min-h-[320px] max-h-[720px] lg:h-[65vh]">
-      <div class="absolute inset-0 overflow-hidden">
-        <HeroCoverImage
+  <div v-if="post">
+    <section class="relative overflow-hidden pt-[72px]">
+      <div class="absolute inset-0" aria-hidden="true">
+        <img
           v-if="heroImageSrc"
           :src="heroImageSrc"
-          :alt="post.title as string"
+          alt=""
+          class="h-full w-full object-cover"
         />
-        <div v-else class="h-full w-full bg-linear-to-br from-olivine-300 to-olivine-800" />
-
-        <div class="absolute inset-0 z-[2] bg-linear-to-t from-black/85 via-black/45 to-black/15" />
+        <div v-else class="h-full w-full bg-ink" />
+        <div class="absolute inset-0 bg-gradient-to-b from-ink/45 via-ink/55 to-ink/80" />
       </div>
+      <div class="container-x relative pb-24 pt-12 sm:pb-28 sm:pt-16">
+        <Reveal>
+          <div class="flex flex-wrap items-center gap-3">
+            <span
+              class="rounded-full bg-moss px-3.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white"
+            >
+              {{ categoryBadgeLabel(post.category) }}
+            </span>
+            <nav class="flex items-center gap-1.5 text-[13px] text-white/70">
+              <NuxtLink to="/" class="transition-colors hover:text-white">Главная</NuxtLink>
+              <ChevronRight class="h-3.5 w-3.5" />
+              <NuxtLink to="/encyclopedia" class="transition-colors hover:text-white">
+                Энциклопедия
+              </NuxtLink>
+              <ChevronRight class="h-3.5 w-3.5" />
+              <span class="max-w-[40vw] truncate text-white">{{ post.title }}</span>
+            </nav>
+          </div>
+        </Reveal>
 
-      <div
-        class="absolute bottom-0 left-0 right-0 z-[3] px-6 pt-6 lg:p-16"
-        :class="
-          coordPair || coordLabelFallback ? 'pb-24 sm:pb-20 lg:pb-16' : 'pb-6 lg:pb-16'
-        "
-      >
-        <div class="max-w-4xl">
+        <Reveal :delay="0.08">
           <h1
-            class="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-extrabold text-white tracking-tight leading-snug [text-shadow:0_2px_24px_rgba(0,0,0,0.55)]"
+            class="mt-10 max-w-4xl font-display text-4xl font-medium leading-[1.08] tracking-tightest text-white sm:text-5xl lg:text-6xl"
           >
             {{ post.title }}
           </h1>
-          <p v-if="post.subtitle" class="mt-4 text-xl lg:text-2xl text-olivine-200 font-light">
+        </Reveal>
+        <Reveal v-if="post.subtitle" :delay="0.16">
+          <p class="mt-6 max-w-2xl text-[16.5px] leading-relaxed text-white/80">
             {{ post.subtitle }}
           </p>
-          <div v-if="coordPair || coordLabelFallback" class="mt-6 flex items-center gap-3">
-            <HeroUiIcon
-              name="i-heroicons-map-pin"
-              icon-class="w-4 h-4 flex-shrink-0 text-white/75"
-            />
-            <button
-              v-if="coordPair"
-              type="button"
-              class="text-left w-full min-w-0 rounded-sm outline-offset-4 hover:opacity-95 focus-visible:ring-2 focus-visible:ring-white/40"
-              @click="openInMap(coordPair.lat, coordPair.lng)"
-            >
-              <CoordinatesDmsDisplay
-                variant="hero"
-                :latitude="coordPair.lat"
-                :longitude="coordPair.lng"
-              />
-            </button>
-            <span v-else class="font-mono text-sm">{{ coordLabelFallback }}</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section v-if="statCards.length" class="py-8 lg:py-12 px-6 lg:px-12 -mt-8 sm:-mt-12 lg:-mt-16 relative z-10">
-      <div class="max-w-6xl mx-auto">
-        <div class="grid gap-4" :class="gridClass">
-          <div
-            v-for="(card, idx) in statCards"
-            :key="idx"
-            class="bg-white rounded-xl shadow-lg p-4 lg:p-6 min-w-0"
+        </Reveal>
+        <Reveal v-if="coordPair || coordLabelFallback" :delay="0.22">
+          <button
+            v-if="coordPair"
+            type="button"
+            class="mt-7 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-2 text-[13px] font-medium tracking-wide text-white/90 backdrop-blur-sm transition hover:bg-white/20"
+            @click="openInMap(coordPair.lat, coordPair.lng)"
           >
-            <HeroUiIcon :name="card.icon" icon-class="w-5 h-5 text-olivine-500 mb-2" />
-            <p class="text-xs text-gray-500 uppercase tracking-wider mb-0">{{ card.title }}</p>
-            <button
-              v-if="card.map && coordPair && card.isCoordinates"
-              type="button"
-              class="text-left w-full min-w-0 mt-2 hover:opacity-95 rounded-sm outline-offset-2 focus-visible:ring-2 focus-visible:ring-olivine-300"
-              @click="openInMap(coordPair.lat, coordPair.lng)"
-            >
-              <CoordinatesDmsDisplay
-                variant="card"
-                :latitude="coordPair.lat"
-                :longitude="coordPair.lng"
-              />
-            </button>
-            <p v-else class="text-sm lg:text-base font-medium text-gray-900 mt-1">{{ card.text }}</p>
-          </div>
-        </div>
+            <MapPin class="h-4 w-4 text-sand" />
+            <CoordinatesDmsDisplay
+              variant="hero"
+              :latitude="coordPair.lat"
+              :longitude="coordPair.lng"
+            />
+          </button>
+          <p
+            v-else
+            class="mt-7 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-2 text-[13px] font-medium text-white/90"
+          >
+            <MapPin class="h-4 w-4 text-sand" />
+            {{ coordLabelFallback }}
+          </p>
+        </Reveal>
       </div>
     </section>
 
-    <section v-if="post.content" class="py-12 lg:py-16 px-6 lg:px-12">
-      <div class="max-w-4xl mx-auto">
-        <h2 class="text-2xl lg:text-3xl font-bold text-gray-900 mb-8">Описание</h2>
-        <TiptapHtml
-          :content="post.content"
-          wrapper-class="encyclopedia-prose max-w-none text-gray-700"
+    <section class="container-x relative z-10 -mt-10">
+      <Reveal>
+        <div
+          class="grid gap-4 rounded-3xl border border-line bg-white p-5 shadow-[0_24px_48px_-28px_rgb(27_30_23/0.25)] sm:grid-cols-3 sm:p-6"
+        >
+          <div class="flex items-center gap-4">
+            <span
+              class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-moss-wash text-moss"
+            >
+              <Tag class="h-5 w-5" />
+            </span>
+            <div>
+              <p
+                class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+              >
+                Категория
+              </p>
+              <p class="mt-1 text-[15px] font-semibold text-ink">
+                {{ categoryShortLabel(post.category) }}
+              </p>
+            </div>
+          </div>
+          <div v-if="publishedLabel" class="flex items-center gap-4">
+            <span
+              class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-moss-wash text-moss"
+            >
+              <CalendarDays class="h-5 w-5" />
+            </span>
+            <div>
+              <p
+                class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+              >
+                Опубликовано
+              </p>
+              <p class="mt-1 text-[15px] font-semibold text-ink">{{ publishedLabel }}</p>
+            </div>
+          </div>
+          <div v-if="coordPair || coordLabelFallback" class="flex items-center gap-4">
+            <span
+              class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-moss-wash text-moss"
+            >
+              <Globe2 class="h-5 w-5" />
+            </span>
+            <div class="min-w-0">
+              <p
+                class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+              >
+                Координаты
+              </p>
+              <button
+                v-if="coordPair"
+                type="button"
+                class="mt-1 w-full truncate text-left text-[14px] font-semibold text-ink hover:text-moss"
+                @click="openInMap(coordPair.lat, coordPair.lng)"
+              >
+                <CoordinatesDmsDisplay
+                  variant="card"
+                  :latitude="coordPair.lat"
+                  :longitude="coordPair.lng"
+                />
+              </button>
+              <p v-else class="mt-1 truncate text-[14px] font-semibold text-ink">
+                {{ coordLabelFallback }}
+              </p>
+            </div>
+          </div>
+          <div
+            v-if="locationLabel || locationLoading"
+            class="flex items-center gap-4 sm:col-span-3"
+          >
+            <span
+              class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-moss-wash text-moss"
+            >
+              <MapPin class="h-5 w-5" />
+            </span>
+            <div>
+              <p
+                class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+              >
+                Локация
+              </p>
+              <p class="mt-1 text-[15px] font-semibold text-ink">
+                {{ locationLoading ? '…' : locationLabel }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </Reveal>
+    </section>
+
+    <section class="container-x py-16 sm:py-20">
+      <div class="grid gap-12 lg:grid-cols-[1fr_320px]">
+        <div class="max-w-3xl">
+          <Reveal>
+            <p class="eyebrow">Описание</p>
+          </Reveal>
+          <Reveal v-if="post.content" :delay="0.06" class="mt-6">
+            <TiptapHtml
+              :content="post.content"
+              wrapper-class="encyclopedia-prose max-w-none text-ink-soft"
+            />
+          </Reveal>
+
+          <Reveal class="mt-12">
+            <NuxtLink
+              to="/encyclopedia"
+              class="group inline-flex items-center gap-2 text-[14px] font-semibold text-moss"
+            >
+              <ArrowLeft
+                class="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1"
+              />
+              Вся энциклопедия
+            </NuxtLink>
+          </Reveal>
+        </div>
+
+        <aside class="space-y-6 lg:sticky lg:top-28 lg:self-start">
+          <Reveal v-if="coordPair" :delay="0.1">
+            <div class="overflow-hidden rounded-3xl border border-line bg-white">
+              <ClientOnly>
+                <div
+                  v-if="showMapboxMap && mapboxOptions"
+                  class="relative h-56 w-full overflow-hidden bg-paper-deep"
+                >
+                  <MapboxMap :map-id="mapboxMapId" :options="mapboxOptions">
+                    <MapboxDefaultMarker :marker-id="mapboxMarkerId" :lnglat="markerLngLat" />
+                  </MapboxMap>
+                </div>
+                <div
+                  v-else-if="showYandexMap"
+                  class="relative h-56 w-full overflow-hidden bg-paper-deep"
+                >
+                  <EncyclopediaYandexMap
+                    :lng="coordPair.lng"
+                    :lat="coordPair.lat"
+                    :title="post.title || undefined"
+                  />
+                </div>
+                <div
+                  v-else
+                  class="flex h-56 items-center justify-center bg-paper-deep px-4 text-center text-sm text-muted-foreground"
+                >
+                  Карта недоступна без ключа Mapbox или Яндекс.Карт
+                </div>
+              </ClientOnly>
+              <div class="p-5">
+                <p
+                  class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+                >
+                  Расположение
+                </p>
+                <p class="mt-2 text-[13.5px] font-medium leading-relaxed text-ink">
+                  <CoordinatesDmsDisplay
+                    variant="inline"
+                    :latitude="coordPair.lat"
+                    :longitude="coordPair.lng"
+                  />
+                </p>
+              </div>
+            </div>
+          </Reveal>
+        </aside>
+      </div>
+    </section>
+
+    <section v-if="galleryPaths.length > 0" class="container-x pb-16 sm:pb-20">
+      <Reveal>
+        <div class="mb-8 flex items-center gap-3">
+          <Images class="h-5 w-5 text-moss" />
+          <h2 class="font-display text-2xl font-semibold text-ink sm:text-3xl">Галерея</h2>
+        </div>
+      </Reveal>
+      <div class="aspect-[21/9] mb-4 overflow-hidden rounded-[2rem] border border-line bg-paper-deep">
+        <img
+          :src="galleryPaths[gallerySelected]"
+          :alt="`${post.title} — фото ${gallerySelected + 1}`"
+          class="h-full w-full object-cover object-center"
+        />
+      </div>
+      <div v-if="galleryPaths.length > 1" class="flex flex-wrap gap-3">
+        <button
+          v-for="(src, i) in galleryPaths"
+          :key="i"
+          type="button"
+          class="h-16 w-24 overflow-hidden rounded-lg transition-all duration-300 lg:h-20 lg:w-32"
+          :class="
+            gallerySelected === i
+              ? 'ring-2 ring-moss ring-offset-2'
+              : 'opacity-60 hover:opacity-100'
+          "
+          @click="gallerySelected = i"
+        >
+          <img :src="src" :alt="`Миниатюра ${i + 1}`" class="h-full w-full object-cover" />
+        </button>
+      </div>
+    </section>
+
+    <section v-if="attachedVideos.length" class="container-x pb-16 sm:pb-20">
+      <Reveal>
+        <h2 class="mb-8 font-display text-2xl font-semibold text-ink sm:text-3xl">Видео</h2>
+      </Reveal>
+      <div class="flex flex-col gap-10">
+        <SiteMediaVideoPlayer
+          v-for="(v, idx) in attachedVideos"
+          :key="v.id ?? idx"
+          :src="encyclopediaVideoSrc(v.path)"
+          :caption="attachedVideos.length > 1 ? `Фрагмент ${idx + 1}` : undefined"
         />
       </div>
     </section>
 
-    <section v-if="galleryPaths.length > 0" class="py-12 lg:py-16 px-6 lg:px-12">
-      <div class="max-w-6xl mx-auto">
-        <h2 class="text-2xl lg:text-3xl font-bold text-gray-900 mb-8">Галерея</h2>
-        <div class="aspect-[21/9] rounded-2xl overflow-hidden bg-gray-100 mb-4">
-          <img
-            :src="galleryPaths[gallerySelected]"
-            :alt="`${post.title} — фото ${gallerySelected + 1}`"
-            class="w-full h-full object-cover object-center"
-          />
-        </div>
-        <div v-if="galleryPaths.length > 1" class="flex gap-3 flex-wrap">
-          <button
-            v-for="(src, i) in galleryPaths"
-            :key="i"
-            type="button"
-            class="w-24 h-16 lg:w-32 lg:h-20 rounded-lg overflow-hidden transition-all duration-300"
-            :class="
-              gallerySelected === i
-                ? 'ring-2 ring-olivine-500 ring-offset-2'
-                : 'opacity-60 hover:opacity-100'
-            "
-            @click="gallerySelected = i"
-          >
-            <img :src="src" :alt="`Миниатюра ${i + 1}`" class="w-full h-full object-cover" />
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <section v-if="attachedVideos.length" class="py-12 lg:py-16 px-6 lg:px-12">
-      <div class="max-w-6xl mx-auto">
-        <h2 class="text-2xl lg:text-3xl font-bold text-gray-900 mb-8">Видео</h2>
-        <div class="flex flex-col gap-10">
-          <SiteMediaVideoPlayer
-            v-for="(v, idx) in attachedVideos"
-            :key="v.id ?? idx"
-            :src="encyclopediaVideoSrc(v.path)"
-            :caption="attachedVideos.length > 1 ? `Фрагмент ${idx + 1}` : undefined"
-          />
-        </div>
-      </div>
-    </section>
-
-    <section v-if="coordPair || coordLabelFallback" class="py-12 lg:py-16 px-6 lg:px-12 bg-gray-50">
-      <div class="max-w-6xl mx-auto">
-        <h2 class="text-2xl lg:text-3xl font-bold text-gray-900 mb-8">Расположение на карте</h2>
+    <section
+      v-if="coordPair || coordLabelFallback"
+      class="border-t border-line bg-paper-deep/60 py-16 sm:py-20"
+    >
+      <div class="container-x">
+        <h2 class="mb-8 font-display text-2xl font-semibold text-ink sm:text-3xl">
+          Расположение на карте
+        </h2>
         <ClientOnly>
           <div
             v-if="showMapboxMap && mapboxOptions"
-            class="relative h-[min(420px,55vw)] w-full min-h-[280px] max-h-[520px] overflow-hidden rounded-2xl border border-slate-200 bg-neutral-200 grayscale"
+            class="relative h-[min(420px,55vw)] max-h-[520px] min-h-[280px] w-full overflow-hidden rounded-[2rem] border border-line bg-paper-deep"
           >
-            <MapboxMap :map-id="mapboxMapId" class="rounded-2xl" :options="mapboxOptions">
-              <MapboxDefaultMarker :marker-id="mapboxMarkerId" :lnglat="markerLngLat" />
+            <MapboxMap :map-id="`${mapboxMapId}-large`" :options="mapboxOptions">
+              <MapboxDefaultMarker
+                :marker-id="`${mapboxMarkerId}-large`"
+                :lnglat="markerLngLat"
+              />
             </MapboxMap>
           </div>
           <div
             v-else-if="showYandexMap && coordPair"
-            class="relative h-[min(420px,55vw)] w-full min-h-[280px] max-h-[520px] overflow-hidden rounded-2xl border border-slate-200 bg-neutral-200"
+            class="relative h-[min(420px,55vw)] max-h-[520px] min-h-[280px] w-full overflow-hidden rounded-[2rem] border border-line bg-paper-deep"
           >
             <EncyclopediaYandexMap
               :lng="coordPair.lng"
               :lat="coordPair.lat"
-              :title="(post.title as string) || undefined"
+              :title="post.title || undefined"
             />
           </div>
           <div
             v-else
-            class="flex h-[min(420px,55vw)] min-h-[280px] w-full max-h-[520px] flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 text-center text-sm text-slate-600"
+            class="flex h-[min(420px,55vw)] max-h-[520px] min-h-[280px] w-full flex-col items-center justify-center gap-2 rounded-[2rem] border border-dashed border-line bg-white px-4 text-center text-sm text-muted-foreground"
           >
             <p>
-              Для встраивания карты добавьте в <code class="rounded bg-slate-200 px-1 py-0.5 text-xs">.env</code>
-              ключ Mapbox:
-              <code class="rounded bg-slate-200 px-1 py-0.5 text-xs">PUBLIC_MAPBOX_ACCESS_TOKEN</code>
-              или
-              <code class="rounded bg-slate-200 px-1 py-0.5 text-xs">NUXT_PUBLIC_MAPBOX_ACCESS_TOKEN</code>
-              — либо ключ Яндекс.Карт:
-              <code class="rounded bg-slate-200 px-1 py-0.5 text-xs">PUBLIC_YANDEX_MAPS_API_KEY</code>
-              или
-              <code class="rounded bg-slate-200 px-1 py-0.5 text-xs">NUXT_PUBLIC_YANDEX_MAPS_API_KEY</code>
+              Для встраивания карты добавьте ключ Mapbox или Яндекс.Карт в
+              <code class="rounded bg-paper-deep px-1 py-0.5 text-xs">.env</code>
             </p>
           </div>
-          <template #fallback>
-            <div
-              class="h-[min(420px,55vw)] min-h-[280px] w-full max-h-[520px] rounded-2xl border border-slate-200 bg-gray-100 animate-pulse"
-            />
-          </template>
         </ClientOnly>
-        <CoordinatesDmsDisplay
-          v-if="coordPair"
-          class="mt-4"
-          variant="inline"
-          :latitude="coordPair.lat"
-          :longitude="coordPair.lng"
-        />
-        <p v-else-if="coordLabelFallback" class="mt-4 font-mono text-sm text-gray-600">
-          {{ coordLabelFallback }}
-        </p>
-        <p v-else-if="locationLabel" class="mt-2 text-sm text-gray-500">{{ locationLabel }}</p>
       </div>
     </section>
   </div>
@@ -458,8 +529,20 @@ watch(
 
 <style scoped>
 :deep(.encyclopedia-prose p) {
-  color: rgb(55 65 81);
-  line-height: 1.625;
+  color: #45493f;
+  line-height: 1.7;
   margin-bottom: 1rem;
+  font-size: 16px;
+}
+:deep(.encyclopedia-prose h2),
+:deep(.encyclopedia-prose h3) {
+  font-family: 'Playfair Display', Georgia, serif;
+  color: #1b1e17;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+:deep(.encyclopedia-prose a) {
+  color: #5e7a45;
+  text-decoration: underline;
 }
 </style>

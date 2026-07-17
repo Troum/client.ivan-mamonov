@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
-import SocialLinkButton from '~/components/SocialLinkButton.vue'
+import { Camera, Mail, MapPin, Phone, Play, Send } from '@lucide/vue'
 import { defaultSiteContacts, loadSiteContacts } from '~/composables/useSiteContent'
 
 definePageMeta({
@@ -20,7 +19,9 @@ usePageSeo(s0.seo, {
   ogImage: s0.seo.og_image?.trim() || s0.hero_background_image,
 })
 
-const options = computed(() => site.value.feedback_themes.map((t) => ({ value: t.value, label: t.label })))
+const options = computed(() =>
+  site.value.feedback_themes.map((t) => ({ value: t.value, label: t.label })),
+)
 
 const selected = ref(options.value[0]?.value ?? 1)
 const theme = ref<string>()
@@ -33,7 +34,7 @@ watch(
       selected.value = opts[0].value
     }
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 watch(
@@ -41,123 +42,150 @@ watch(
   () => {
     theme.value = options.value.find((o) => o.value === selected.value)?.label
   },
-  { immediate: true }
+  { immediate: true },
 )
 
-const breadcrumbs = [
-  { label: 'Главная', to: '/' },
-  { label: 'Контакты' },
-]
+const socialIcon = (platform: string) => {
+  const p = platform.toLowerCase()
+  if (p.includes('telegram')) return Send
+  if (p.includes('instagram')) return Camera
+  if (p.includes('youtube')) return Play
+  return Mail
+}
 </script>
 
 <template>
-  <div class="min-h-screen bg-white">
-    <AppBreadcrumbs :items="breadcrumbs" />
-    <section class="relative min-h-[40vh] bg-olivine-950 flex items-center justify-center">
-      <div class="absolute inset-0 opacity-10">
-        <div
-          class="absolute inset-0 bg-cover bg-center"
-          :style="{ backgroundImage: `url('${resolvePublicMediaUrl(site.hero_background_image)}')` }"
-        />
-        <div class="absolute inset-0 bg-gradient-to-b from-olivine-950/80 to-olivine-950" />
-      </div>
+  <div>
+    <PageHero
+      eyebrow="Контакты"
+      current="Контакты"
+      title-html="Давайте создадим что-то <em class=&quot;italic text-moss&quot;>прекрасное</em> вместе"
+      title="Давайте создадим что-то прекрасное вместе"
+      :subtitle="
+        site.hero_subtitle ||
+        'Открыт для сотрудничества, съёмок и интересных идей — отвечаю обычно в течение дня.'
+      "
+    />
 
-      <div class="relative z-10 text-center px-6 py-24">
-        <h1 class="text-5xl lg:text-7xl xl:text-8xl font-extrabold text-white tracking-tight">
-          {{ site.hero_title }}
-        </h1>
-        <p v-if="site.hero_subtitle" class="mt-6 text-lg text-olivine-200 max-w-2xl mx-auto">
-          {{ site.hero_subtitle }}
-        </p>
-      </div>
-    </section>
-
-    <section class="py-16 lg:py-24 px-6 lg:px-12">
-      <div class="max-w-6xl mx-auto">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
-          <div>
-            <h2 class="text-2xl lg:text-3xl font-bold text-gray-900 mb-8">
-              {{ site.section_title }}
+    <section class="container-x pb-24">
+      <div class="grid gap-10 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
+        <div>
+          <Reveal>
+            <h2 class="font-display text-2xl font-semibold text-ink sm:text-3xl">
+              {{ site.section_title || 'Свяжитесь со мной' }}
             </h2>
+          </Reveal>
 
-            <div class="space-y-6">
-              <div class="flex items-start gap-4">
-                <div class="w-12 h-12 bg-olivine-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <HeroUiIcon name="i-heroicons-envelope" icon-class="w-5 h-5 text-olivine-600" />
-                </div>
-                <div>
-                  <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider">Email</h3>
+          <div class="mt-8 space-y-4">
+            <Reveal>
+              <div
+                class="group flex items-center gap-5 rounded-2xl border border-line bg-white p-5 transition-colors hover:border-moss/40"
+              >
+                <span
+                  class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-moss-wash text-moss transition-colors duration-500 group-hover:bg-moss group-hover:text-white"
+                >
+                  <Mail class="h-5 w-5" />
+                </span>
+                <div class="min-w-0">
+                  <p
+                    class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+                  >
+                    Email
+                  </p>
                   <a
                     :href="`mailto:${site.email}`"
-                    class="text-lg text-gray-900 hover:text-olivine-500 transition-colors"
+                    class="mt-1 block truncate text-[15.5px] font-medium text-ink transition-colors hover:text-moss"
                   >
                     {{ site.email }}
                   </a>
                 </div>
               </div>
+            </Reveal>
 
-              <div class="flex items-start gap-4">
-                <div class="w-12 h-12 bg-olivine-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <HeroUiIcon name="i-heroicons-phone" icon-class="w-5 h-5 text-olivine-600" />
-                </div>
-                <div>
-                  <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider">Телефон</h3>
+            <Reveal :delay="0.05">
+              <div
+                class="group flex items-center gap-5 rounded-2xl border border-line bg-white p-5 transition-colors hover:border-moss/40"
+              >
+                <span
+                  class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-moss-wash text-moss transition-colors duration-500 group-hover:bg-moss group-hover:text-white"
+                >
+                  <Phone class="h-5 w-5" />
+                </span>
+                <div class="min-w-0">
+                  <p
+                    class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+                  >
+                    Телефон
+                  </p>
                   <a
                     :href="site.phone_href"
-                    class="text-lg text-gray-900 hover:text-olivine-500 transition-colors"
+                    class="mt-1 block truncate text-[15.5px] font-medium text-ink transition-colors hover:text-moss"
                   >
                     {{ site.phone_display }}
                   </a>
                 </div>
               </div>
+            </Reveal>
 
-              <div class="flex items-start gap-4">
-                <div class="w-12 h-12 bg-olivine-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <HeroUiIcon name="i-heroicons-map-pin" icon-class="w-5 h-5 text-olivine-600" />
-                </div>
-                <div>
-                  <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider">Локация</h3>
-                  <p class="text-lg text-gray-900">{{ site.location }}</p>
+            <Reveal :delay="0.1">
+              <div
+                class="group flex items-center gap-5 rounded-2xl border border-line bg-white p-5 transition-colors hover:border-moss/40"
+              >
+                <span
+                  class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-moss-wash text-moss transition-colors duration-500 group-hover:bg-moss group-hover:text-white"
+                >
+                  <MapPin class="h-5 w-5" />
+                </span>
+                <div class="min-w-0">
+                  <p
+                    class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+                  >
+                    Локация
+                  </p>
+                  <p class="mt-1 text-[15.5px] font-medium text-ink">{{ site.location }}</p>
                 </div>
               </div>
-            </div>
+            </Reveal>
+          </div>
 
-            <div class="mt-10">
-              <h3 id="contact-theme-heading" class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">
-                Тема обращения
-              </h3>
-              <FormsContactThemeRadios
-                v-model="selected"
-                :options="options"
-                heading-id="contact-theme-heading"
-              />
-            </div>
-
-            <div v-if="site.social_links.length" class="mt-12">
-              <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">Социальные сети</h3>
-              <div class="flex flex-wrap gap-4">
-                <SocialLinkButton
-                  v-for="(link, i) in site.social_links"
-                  :key="i"
-                  :platform="link.platform"
-                  :url="link.url"
-                  :aria-label="link.aria_label ?? undefined"
+          <Reveal v-if="site.social_links.length" :delay="0.15">
+            <p
+              class="mt-10 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+            >
+              Социальные сети
+            </p>
+            <div class="mt-4 flex flex-wrap gap-3">
+              <a
+                v-for="(link, i) in site.social_links"
+                :key="i"
+                :href="link.url"
+                target="_blank"
+                rel="noreferrer"
+                class="group inline-flex items-center gap-2.5 rounded-full border border-line bg-white px-5 py-2.5 text-[13.5px] font-semibold text-ink transition-all hover:border-moss hover:text-moss"
+              >
+                <component
+                  :is="socialIcon(link.platform)"
+                  class="h-4 w-4 text-muted-foreground transition-colors group-hover:text-moss"
                 />
-              </div>
+                {{ link.aria_label || link.platform }}
+              </a>
             </div>
-          </div>
-
-          <div class="space-y-10">
-            <div class="bg-olivine-50 rounded-2xl p-6 lg:p-8">
-              <h2 class="text-xl font-bold text-gray-900 mb-6">Отправить сообщение</h2>
-              <FormsFeedbackForm :theme="theme" />
-            </div>
-            <div class="rounded-2xl border border-olivine-100 p-6 lg:p-8">
-              <h2 class="text-lg font-bold text-gray-900 mb-4">Рассылка</h2>
-              <FormsSubscribeInline />
-            </div>
-          </div>
+          </Reveal>
         </div>
+
+        <Reveal :delay="0.1">
+          <div class="rounded-[2rem] border border-line bg-white p-7 sm:p-10">
+            <FormsFeedbackForm :theme="theme" :theme-label="theme">
+              <template #themes>
+                <FormsContactThemeRadios
+                  v-model="selected"
+                  :options="options"
+                  heading-id="contact-theme-heading"
+                />
+              </template>
+            </FormsFeedbackForm>
+          </div>
+        </Reveal>
       </div>
     </section>
   </div>

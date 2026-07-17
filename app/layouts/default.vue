@@ -1,14 +1,9 @@
-<script setup lang="ts">
-const route = useRoute()
-const isHome = computed(() => route.path === '/')
-</script>
-
 <template>
-  <div class="min-h-screen bg-white">
+  <div class="flex min-h-screen flex-col bg-paper">
     <LayoutAppHeader />
-    <main :class="isHome ? '' : 'pt-16 lg:pt-20'">
+    <main class="flex-1">
       <slot />
     </main>
-    <LayoutAppFooter v-if="!isHome" />
+    <LayoutAppFooter />
   </div>
 </template>

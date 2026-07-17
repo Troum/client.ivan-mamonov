@@ -130,6 +130,36 @@ export function useContentApi() {
     return one
   }
 
+  /** Публичный `GET /encyclopedia/random` — случайная опубликованная запись. */
+  async function fetchEncyclopediaRandom() {
+    try {
+      const one = extractOne(
+        await $fetch(apiUrl('/encyclopedia/random'), {
+          headers: { Accept: 'application/json' },
+        }),
+      )
+      if (one) normalizeImageListField(one, 'main_images')
+      return one
+    } catch {
+      return null
+    }
+  }
+
+  /** Публичный `GET /posts/random` — случайная опубликованная запись блога. */
+  async function fetchPostRandom() {
+    try {
+      const one = extractOne(
+        await $fetch(apiUrl('/posts/random'), {
+          headers: { Accept: 'application/json' },
+        }),
+      )
+      if (one) normalizeImageListField(one, 'main_images')
+      return one
+    } catch {
+      return null
+    }
+  }
+
   async function fetchSiteAbout() {
     try {
       return extractOne(
@@ -209,6 +239,8 @@ export function useContentApi() {
     fetchEncyclopedia,
     fetchMapLocations,
     fetchEncyclopediaBySlug,
+    fetchEncyclopediaRandom,
+    fetchPostRandom,
     fetchSiteAbout,
     fetchSiteContacts,
     fetchSiteBlog,

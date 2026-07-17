@@ -1,20 +1,28 @@
 <script setup lang="ts">
-import { ExclamationCircleIcon } from '@heroicons/vue/24/outline'
-import { computed, ref } from 'vue'
+import {
+  CalendarDays,
+  Compass,
+  Globe2,
+  Landmark,
+  LayoutGrid,
+  Map as MapIcon,
+} from '@lucide/vue'
 import type { Encyclopedia } from '~/interfaces/Encyclopedia'
 import {
   defaultSiteEncyclopediaSection,
   loadSiteEncyclopediaSection,
   type SiteEncyclopediaCategoryItem,
 } from '~/composables/useSiteContent'
-import SiteSectionHero from "~/components/SiteSectionHero.vue";
+import { resolvePublicMediaUrl } from '~/composables/usePageSeo'
 
 const route = useRoute()
+const router = useRouter()
 const contentApi = useContentApi()
 
-const { data: encSectionData } = await useAsyncData('site-encyclopedia-section', () => loadSiteEncyclopediaSection(), {
-  default: () => defaultSiteEncyclopediaSection(),
-})
+const { data: encSectionData } = await useAsyncData('site-encyclopedia-section', () =>
+  loadSiteEncyclopediaSection(),
+  { default: () => defaultSiteEncyclopediaSection() },
+)
 
 const encSection = computed(() => encSectionData.value ?? defaultSiteEncyclopediaSection())
 
@@ -22,60 +30,52 @@ const es = encSection.value
 usePageSeo(es.seo, {
   title: es.seo.meta_title?.trim() || es.hero_title || 'Энциклопедия — Иван Мамонов',
   description: es.seo.meta_description?.trim() || es.hero_subtitle,
-  ogImage: es.seo.og_image?.trim() || es.hero_background_image,
+  ogImage: es.seo.og_image?.trim() || es.hero_background_image || '/images/hero-encyclopedia.jpg',
 })
 
-const posts = ref<Encyclopedia[]>([])
-/** 'all' или value из API (`?c=`) — совпадает с encyclopedia.category */
+const { data: postsData } = await useAsyncData('encyclopedia-list', () =>
+  contentApi.fetchEncyclopedia(),
+)
+
+const posts = computed(() => (postsData.value ?? []) as unknown as Encyclopedia[])
+
 const activeCategory = computed(() => {
   const raw = route.query.c
   const s = Array.isArray(raw) ? raw[0] : raw
   if (!s || s === 'all') return 'all'
   const key = String(s)
-  const allowed = (encSection.value.categories?.length
-    ? encSection.value.categories
-    : defaultSiteEncyclopediaSection().categories
+  const allowed = (
+    encSection.value.categories?.length
+      ? encSection.value.categories
+      : defaultSiteEncyclopediaSection().categories
   ).map((c) => c.value)
   return allowed.includes(key) ? key : 'all'
-})
-const hoveredLocation = ref<string | null>(null)
-
-contentApi.fetchEncyclopedia().then((rows) => {
-  posts.value = rows as unknown as Encyclopedia[]
 })
 
 const categoryTabs = computed(() => {
   const list: SiteEncyclopediaCategoryItem[] = encSection.value.categories?.length
     ? encSection.value.categories
     : defaultSiteEncyclopediaSection().categories
-  return list.map((c) => ({
-    value: c.value,
-    label: c.label,
-    icon: c.icon?.trim() || 'i-heroicons-tag',
-  }))
+  return list
 })
 
-const filterPillClass = (active: boolean) =>
-  [
-    'flex items-center gap-2 px-4 lg:px-6 py-2 rounded-full text-sm font-medium transition-all duration-300',
-    active
-      ? 'bg-olivine-500 text-white'
-      : 'bg-gray-100 text-gray-600 hover:bg-olivine-100 hover:text-olivine-700',
-  ]
+const FILTER_ICONS: Record<string, typeof Globe2> = {
+  all: LayoutGrid,
+  nature: Globe2,
+  history: Landmark,
+  events: CalendarDays,
+}
 
-const isAllFilterActive = computed(
-  () => route.path === '/encyclopedia' && activeCategory.value === 'all',
-)
-const isMapNavActive = computed(() => route.path === '/encyclopedia/map')
-
-/** Только если category в записи пусто — подбор по тексту (редкий случай для старых данных). */
 function guessCategoryLegacy(e: Encyclopedia): string {
   const t = `${e.title} ${e.subtitle ?? ''}`.toLowerCase()
-  const values = (encSection.value.categories ?? defaultSiteEncyclopediaSection().categories).map((c) => c.value)
+  const values = (
+    encSection.value.categories ?? defaultSiteEncyclopediaSection().categories
+  ).map((c) => c.value)
   const history = values.find((v) => v === 'history')
   const events = values.find((v) => v === 'events')
   const nature = values.find((v) => v === 'nature')
-  if (/истор|маяк|руин|мост|музей|крепост|замок|село|вантов|город/.test(t)) return history ?? nature ?? values[0] ?? ''
+  if (/истор|маяк|руин|мост|музей|крепост|замок|село|вантов|город/.test(t))
+    return history ?? nature ?? values[0] ?? ''
   if (/событ|фестиваль|праздник|ярмарк/.test(t)) return events ?? nature ?? values[0] ?? ''
   return nature ?? values[0] ?? ''
 }
@@ -95,17 +95,19 @@ function badgeLabel(e: Encyclopedia): string {
   if (c) {
     const hit = tabs.find((t) => t.value === c)
     if (hit) return hit.label
-    return c.toUpperCase()
+    return c
   }
   const guessed = guessCategoryLegacy(e)
   const hit2 = tabs.find((t) => t.value === guessed)
-  return hit2?.label ?? '—'
+  return hit2?.label ?? ''
 }
 
 function previewPath(e: Encyclopedia) {
   const img = e.preview_image
-  if (img && typeof img === 'object' && 'path' in img && img.path) return String(img.path)
-  return ''
+  if (img && typeof img === 'object' && 'path' in img && img.path) {
+    return resolvePublicMediaUrl(String(img.path))
+  }
+  return '/images/hero-encyclopedia.jpg'
 }
 
 const filteredLocations = computed(() => {
@@ -113,153 +115,121 @@ const filteredLocations = computed(() => {
   return posts.value.filter((loc) => matchesCategoryFilter(loc, f))
 })
 
-const emptyStateTitle = computed(() => {
-  if (activeCategory.value === 'all' || posts.value.length === 0) {
-    return 'Пока нет записей'
+function setFilter(key: string) {
+  if (key === 'all') {
+    router.push({ path: '/encyclopedia' })
+  } else {
+    router.push({ path: '/encyclopedia', query: { c: key } })
   }
-  return 'В этой категории пока нет записей'
-})
+}
 
-const emptyStateDescription = computed(() => {
-  if (activeCategory.value === 'all' || posts.value.length === 0) {
-    return 'Мы работаем над наполнением энциклопедии. Скоро здесь появятся материалы об истории, природе и событиях Приморья.'
-  }
-  return 'Попробуйте открыть другую рубрику — записи по этой теме ещё готовятся.'
-})
+const contactEmail = 'ivanmamonov.photo@gmail.com'
 
-const breadcrumbs = [
-  { label: 'Главная', to: '/' },
-  { label: 'Энциклопедия' },
-]
+const heroImage = computed(
+  () =>
+    resolvePublicMediaUrl(encSection.value.hero_background_image) ||
+    '/images/hero-encyclopedia.jpg',
+)
 </script>
 
 <template>
-  <div class="min-h-screen bg-white">
-    <AppBreadcrumbs :items="breadcrumbs" />
-    <SiteSectionHero
-      variant="encyclopedia"
-      :background-image="encSection.hero_background_image"
-      :title="encSection.hero_title"
-      :subtitle="encSection.hero_subtitle"
-    />
-
-    <section class="sticky top-16 lg:top-20 z-30 bg-white border-b border-gray-100">
-      <div class="px-6 lg:px-12 py-4">
-        <div class="flex flex-wrap gap-2 lg:gap-4 justify-center">
-          <NuxtLink
-            to="/encyclopedia"
-            :class="filterPillClass(isAllFilterActive)"
-          >
-            <HeroUiIcon name="i-heroicons-map-pin" icon-class="w-4 h-4" />
-            <span class="hidden sm:inline">ВСЕ</span>
-          </NuxtLink>
-          <NuxtLink
-            to="/encyclopedia/map"
-            :class="filterPillClass(isMapNavActive)"
-          >
-            <HeroUiIcon name="i-heroicons-map" icon-class="w-4 h-4" />
-            <span class="hidden sm:inline">КАРТА</span>
-          </NuxtLink>
-          <NuxtLink
-            v-for="category in categoryTabs"
-            :key="category.value"
-            :to="{ path: '/encyclopedia', query: { c: category.value } }"
-            :class="
-              filterPillClass(
-                route.path === '/encyclopedia' && activeCategory === category.value,
-              )
-            "
-          >
-            <HeroUiIcon :name="category.icon" icon-class="w-4 h-4" />
-            <span class="hidden sm:inline">{{ category.label }}</span>
-          </NuxtLink>
-        </div>
-      </div>
-    </section>
-
-    <section class="py-12 lg:py-16 px-6 lg:px-12">
-      <div class="max-w-7xl mx-auto">
-        <div
-          v-if="filteredLocations.length === 0"
-          class="flex flex-col items-center justify-center py-24 text-center"
+  <div>
+    <PageHero
+      eyebrow="Энциклопедия Приморья"
+      current="Энциклопедия"
+      :image="heroImage"
+      title-html="Исторические места, природа и <em class=&quot;italic text-moss&quot;>события края</em>"
+      title="Исторические места, природа и события края"
+      :subtitle="
+        encSection.hero_subtitle ||
+        'Собрание историй Дальнего Востока: забытые острова, исчезнувшие названия и люди, создававшие Приморье.'
+      "
+    >
+      <div class="mt-9 flex flex-wrap gap-2.5">
+        <button
+          type="button"
+          :class="[
+            'inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-[13.5px] font-semibold transition-all duration-300',
+            activeCategory === 'all'
+              ? 'border-moss bg-moss text-white shadow-[0_8px_20px_-8px_rgb(94_122_69/0.6)]'
+              : 'border-line bg-white text-ink-soft hover:border-moss/50 hover:text-moss',
+          ]"
+          @click="setFilter('all')"
         >
-          <div class="w-24 h-24 bg-olivine-50 rounded-full flex items-center justify-center mb-6">
-            <ExclamationCircleIcon class="w-10 h-10 text-olivine-300" />
+          <LayoutGrid class="h-4 w-4" />
+          Все
+        </button>
+        <button
+          v-for="category in categoryTabs"
+          :key="category.value"
+          type="button"
+          :class="[
+            'inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-[13.5px] font-semibold transition-all duration-300',
+            activeCategory === category.value
+              ? 'border-moss bg-moss text-white shadow-[0_8px_20px_-8px_rgb(94_122_69/0.6)]'
+              : 'border-line bg-white text-ink-soft hover:border-moss/50 hover:text-moss',
+          ]"
+          @click="setFilter(category.value)"
+        >
+          <component :is="FILTER_ICONS[category.value] || Globe2" class="h-4 w-4" />
+          {{ category.label }}
+        </button>
+        <NuxtLink
+          to="/encyclopedia/map"
+          class="inline-flex items-center gap-2 rounded-full border border-dashed border-moss/50 bg-moss-wash/60 px-5 py-2.5 text-[13.5px] font-semibold text-moss-dark transition-all duration-300 hover:border-moss hover:bg-moss hover:text-white"
+        >
+          <MapIcon class="h-4 w-4" />
+          Карта
+        </NuxtLink>
+      </div>
+    </PageHero>
+
+    <section class="container-x pb-24">
+      <div v-if="filteredLocations.length > 0" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <ArticleCard
+          v-for="location in filteredLocations"
+          :key="location.slug"
+          :slug="location.slug"
+          :title="location.title"
+          :subtitle="location.subtitle"
+          :image="previewPath(location)"
+          :category="location.category"
+          :category-label="badgeLabel(location)"
+        />
+      </div>
+      <div
+        v-else
+        class="flex flex-col items-center rounded-3xl border border-dashed border-line bg-white/60 px-8 py-20 text-center"
+      >
+        <span class="flex h-14 w-14 items-center justify-center rounded-full bg-moss-wash text-moss">
+          <Compass class="h-6 w-6" />
+        </span>
+        <h3 class="mt-6 font-display text-2xl font-semibold text-ink">Раздел наполняется</h3>
+        <p class="mt-3 max-w-sm text-[15px] leading-relaxed text-muted-foreground">
+          Материалы уже в работе и скоро появятся здесь.
+        </p>
+      </div>
+
+      <Reveal class="mt-16">
+        <div
+          class="flex flex-col items-start justify-between gap-6 rounded-3xl border border-line bg-white p-8 sm:flex-row sm:items-center sm:p-10"
+        >
+          <div>
+            <h3 class="font-display text-2xl font-semibold text-ink sm:text-[28px]">
+              Знаете историю, которой здесь не хватает?
+            </h3>
+            <p class="mt-2 max-w-lg text-[15px] leading-relaxed text-muted-foreground">
+              Напишите мне — интересные факты и локации попадут в следующие выпуски энциклопедии.
+            </p>
           </div>
-          <h2 class="text-2xl font-semibold text-gray-400">
-            {{ emptyStateTitle }}
-          </h2>
-          <p class="mt-3 text-gray-400 max-w-md">
-            {{ emptyStateDescription }}
-          </p>
-        </div>
-        <div
-          v-else
-          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8"
-        >
-          <article
-            v-for="(location, index) in filteredLocations"
-            :key="location.slug"
-            class="group cursor-pointer animate-fadeInUp"
-            :style="{ animationDelay: `${index * 0.1}s` }"
-            @mouseenter="hoveredLocation = location.slug"
-            @mouseleave="hoveredLocation = null"
+          <a
+            :href="`mailto:${contactEmail}`"
+            class="inline-flex shrink-0 items-center gap-2 rounded-full bg-ink px-7 py-3.5 text-[14px] font-semibold text-paper transition-colors hover:bg-moss"
           >
-            <NuxtLink :to="`/encyclopedia/${location.slug}`" class="block">
-              <div class="relative aspect-[4/3] overflow-hidden rounded-xl bg-gray-100">
-                <img
-                  v-if="previewPath(location)"
-                  :src="previewPath(location)"
-                  :alt="location.title"
-                  :class="[
-                    'w-full h-full object-cover transition-transform duration-700',
-                    hoveredLocation === location.slug ? 'scale-110' : 'scale-100',
-                  ]"
-                />
-                <div v-else class="w-full h-full bg-gradient-to-br from-olivine-200 to-olivine-700" />
-
-                <div
-                  :class="[
-                    'absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent transition-opacity duration-300',
-                    hoveredLocation === location.slug ? 'opacity-100' : 'opacity-70',
-                  ]"
-                />
-
-                <div class="absolute top-4 left-4">
-                  <span
-                    class="px-3 py-1 bg-white/90 backdrop-blur-sm text-xs font-medium text-gray-800 rounded-full uppercase tracking-wider"
-                  >
-                    {{ badgeLabel(location) }}
-                  </span>
-                </div>
-
-                <div class="absolute bottom-0 left-0 right-0 p-4 lg:p-6">
-                  <h3 class="text-xl lg:text-2xl font-bold text-white">
-                    {{ location.title }}
-                  </h3>
-                </div>
-              </div>
-
-              <div class="mt-4">
-                <p v-if="location.subtitle" class="text-gray-600 leading-relaxed">
-                  {{ location.subtitle }}
-                </p>
-                <div class="mt-3 flex items-center gap-2 text-olivine-500 font-medium text-sm">
-                  <span>Подробнее</span>
-                  <span
-                    :class="[
-                      'transition-transform duration-300 inline-block',
-                      hoveredLocation === location.slug ? 'translate-x-1' : '',
-                    ]"
-                  >
-                    →
-                  </span>
-                </div>
-              </div>
-            </NuxtLink>
-          </article>
+            Предложить тему
+          </a>
         </div>
-      </div>
+      </Reveal>
     </section>
   </div>
 </template>

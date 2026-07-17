@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ArrowLeft, ChevronRight, Image, ShoppingBag } from '@lucide/vue'
 import type { ProductDetail } from '~/interfaces/Product'
 
 const route = useRoute()
@@ -69,71 +70,118 @@ const breadcrumbs = computed(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-white">
-    <AppBreadcrumbs v-if="product && !loading && !error" :items="breadcrumbs" />
-    <div class="p-8 md:p-16 max-w-6xl mx-auto">
-      <div v-if="loading" class="text-center py-24 text-gray-500">Загрузка…</div>
-      <div v-else-if="error || !product" class="text-center text-gray-700 max-w-md mx-auto py-24">
-        {{ error || 'Не найдено' }}
-        <div class="mt-8">
-          <NuxtLink to="/shop" class="underline text-olivine-600 hover:text-olivine-700">← В каталог</NuxtLink>
+  <div class="min-h-screen pt-[72px]">
+    <div class="container-x py-12 sm:py-16">
+      <div v-if="loading" class="py-24 text-center text-muted-foreground">Загрузка товара…</div>
+      <div
+        v-else-if="error || !product"
+        class="mx-auto max-w-lg rounded-[2rem] border border-line bg-white px-8 py-16 text-center"
+      >
+        <span class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-moss-wash text-moss">
+          <Image class="h-6 w-6" />
+        </span>
+        <h1 class="mt-6 font-display text-3xl font-semibold text-ink">Товар не найден</h1>
+        <p class="mt-3 text-sm leading-relaxed text-muted-foreground">
+          {{ error || 'Не найдено' }}
+        </p>
+        <div class="mt-8 flex justify-center">
+          <NuxtLink to="/shop" class="btn-outline">
+            <ArrowLeft class="h-4 w-4" />
+            В каталог
+          </NuxtLink>
         </div>
       </div>
 
-      <article v-else class="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-start">
-        <div class="space-y-4">
-          <div
-            v-if="product.preview_image?.path"
-            class="rounded-2xl overflow-hidden border border-gray-100 bg-gray-50 aspect-[4/5] lg:aspect-square"
-          >
-            <img :src="product.preview_image.path" :alt="product.title" class="w-full h-full object-cover" />
-          </div>
-          <div v-if="product.has_main_images && product.main_images?.length" class="grid grid-cols-2 gap-3">
-            <div
-              v-for="(img, i) in product.main_images"
-              :key="img.id ?? i"
-              class="aspect-square rounded-xl overflow-hidden border border-gray-100"
-            >
-              <img :src="img.path" :alt="`${product.title} ${i + 1}`" class="w-full h-full object-cover" />
+      <article v-else>
+        <Reveal>
+          <nav class="flex flex-wrap items-center gap-1.5 text-[13px] text-muted-foreground">
+            <template v-for="(item, index) in breadcrumbs" :key="item.label">
+              <ChevronRight v-if="index" class="h-3.5 w-3.5" />
+              <NuxtLink v-if="item.to" :to="item.to" class="transition-colors hover:text-moss">
+                {{ item.label }}
+              </NuxtLink>
+              <span v-else class="text-ink">{{ item.label }}</span>
+            </template>
+          </nav>
+        </Reveal>
+
+        <div class="mt-10 grid items-start gap-10 lg:grid-cols-[1.08fr_0.92fr] lg:gap-16">
+          <Reveal>
+            <div class="space-y-4">
+              <div
+                class="overflow-hidden rounded-[2rem] border border-line bg-paper-deep"
+                :class="product.preview_image?.path ? 'aspect-[4/5] lg:aspect-square' : 'aspect-square'"
+              >
+                <img
+                  v-if="product.preview_image?.path"
+                  :src="product.preview_image.path"
+                  :alt="product.title"
+                  class="h-full w-full object-cover"
+                />
+                <div v-else class="flex h-full items-center justify-center text-muted-foreground">
+                  <Image class="h-10 w-10" />
+                </div>
+              </div>
+              <div
+                v-if="product.has_main_images && product.main_images?.length"
+                class="grid grid-cols-2 gap-4"
+              >
+                <div
+                  v-for="(img, i) in product.main_images"
+                  :key="img.id ?? i"
+                  class="group aspect-square overflow-hidden rounded-2xl border border-line bg-paper-deep"
+                >
+                  <img
+                    :src="img.path"
+                    :alt="`${product.title} ${i + 1}`"
+                    class="img-zoom h-full w-full object-cover"
+                  />
+                </div>
+              </div>
             </div>
+          </Reveal>
+
+          <div class="lg:sticky lg:top-28">
+            <Reveal :delay="0.08">
+              <p class="eyebrow">Авторская коллекция</p>
+              <h1 class="display-1 mt-4 text-4xl sm:text-5xl lg:text-6xl">
+                {{ product.title }}
+              </h1>
+              <p v-if="product.subtitle" class="mt-5 text-[16px] leading-relaxed text-ink-soft">
+                {{ product.subtitle }}
+              </p>
+
+              <div class="my-8 h-px bg-line" />
+
+              <p class="font-display text-3xl font-semibold text-moss">
+                {{ formatPrice(product) }}
+              </p>
+
+              <div class="mt-7 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  class="btn-moss disabled:cursor-wait disabled:opacity-50"
+                  :disabled="adding"
+                  @click="addToCart"
+                >
+                  <ShoppingBag class="h-4 w-4" />
+                  {{ adding ? 'Добавляем…' : 'В корзину' }}
+                </button>
+                <NuxtLink to="/shop/cart" class="btn-outline">
+                  Открыть корзину
+                </NuxtLink>
+              </div>
+
+              <div v-if="product.content" class="mt-10 border-t border-line pt-8 text-ink-soft">
+                <TiptapHtml :content="product.content as object" />
+              </div>
+
+              <p class="mt-8 border-t border-line pt-6 text-sm leading-relaxed text-muted-foreground">
+                По вопросам покупки и доставки можно связаться через раздел
+                <NuxtLink to="/contacts" class="link-underline font-medium text-moss">Контакты</NuxtLink>.
+              </p>
+            </Reveal>
           </div>
-        </div>
-
-        <div class="flex flex-col gap-6">
-          <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 uppercase leading-tight">
-            {{ product.title }}
-          </h1>
-          <p v-if="product.subtitle" class="text-lg text-gray-600">
-            {{ product.subtitle }}
-          </p>
-
-          <p class="text-2xl md:text-3xl font-semibold text-olivine-700">
-            {{ formatPrice(product) }}
-          </p>
-
-          <div class="flex flex-wrap gap-3">
-            <button
-              type="button"
-              class="px-6 py-3 rounded-lg border border-olivine-300 text-olivine-800 uppercase text-sm font-medium hover:bg-olivine-50 disabled:opacity-50"
-              :disabled="adding"
-              @click="addToCart"
-            >
-              {{ adding ? '…' : 'В корзину' }}
-            </button>
-            <NuxtLink
-              to="/shop/cart"
-              class="px-6 py-3 rounded-lg bg-olivine-500 text-white uppercase text-sm font-medium hover:bg-olivine-600"
-            >
-              Корзина
-            </NuxtLink>
-          </div>
-
-          <TiptapHtml v-if="product.content" :content="product.content as object" />
-
-          <p class="text-sm text-gray-500 pt-4">
-            По вопросам покупки и доставки можно связаться через раздел
-            <NuxtLink to="/contacts" class="underline hover:text-olivine-600">Контакты</NuxtLink>.
-          </p>
         </div>
       </article>
     </div>

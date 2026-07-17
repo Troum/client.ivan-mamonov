@@ -1,26 +1,30 @@
 <script setup lang="ts">
+import { ArrowUpRight, Menu, X } from '@lucide/vue'
+
 const route = useRoute()
 const isScrolled = ref(false)
 const isMenuOpen = ref(false)
 
-/** На главной — светлый текст на герое до скролла; на остальных страницах шапка всегда читаемая на белом фоне. */
-const isHome = computed(() => route.path === '/')
-const solidHeader = computed(() => !isHome.value || isScrolled.value || isMenuOpen.value)
-
-/** Полоски гамбургера: group-hover меняет цвет вместе с кнопкой (hover:text-* на них не действует). */
-const barLineClass = computed(() =>
-  solidHeader.value
-    ? 'bg-gray-900 group-hover:bg-olivine-600'
-    : 'bg-white group-hover:bg-olivine-300'
-)
-
 const navItems = [
-  { id: '/blog', label: 'БЛОГ' },
-  { id: '/shop', label: 'МАГАЗИН' },
-  { id: '/encyclopedia', label: 'ЭНЦИКЛОПЕДИЯ' },
-  { id: '/about', label: 'ОБО МНЕ' },
-  { id: '/contacts', label: 'КОНТАКТЫ' },
+  { to: '/shop', label: 'Магазин' },
+  { to: '/encyclopedia', label: 'Энциклопедия' },
+  { to: '/blog', label: 'Блог' },
+  { to: '/about', label: 'Обо мне' },
+  { to: '/contacts', label: 'Контакты' },
 ]
+
+/** Статья энциклопедии / блога с full-bleed тёмным hero — светлый nav до скролла. */
+const isDarkHeroPage = computed(() => {
+  const p = route.path
+  if (p === '/encyclopedia/map') return false
+  if (/^\/encyclopedia\/[^/]+$/.test(p)) return true
+  if (/^\/blog\/[^/]+$/.test(p)) return true
+  return false
+})
+
+const lightNav = computed(
+  () => isDarkHeroPage.value && !isScrolled.value && !isMenuOpen.value,
+)
 
 function navActive(path: string) {
   if (path === '/blog') return route.path.startsWith('/blog')
@@ -30,11 +34,12 @@ function navActive(path: string) {
 }
 
 function handleScroll() {
-  isScrolled.value = window.scrollY > 50
+  isScrolled.value = window.scrollY > 24
 }
 
 onMounted(() => {
   window.addEventListener('scroll', handleScroll, { passive: true })
+  handleScroll()
 })
 
 onUnmounted(() => {
@@ -45,133 +50,148 @@ watch(
   () => route.path,
   () => {
     isMenuOpen.value = false
+    isScrolled.value = false
     if (import.meta.client) {
       window.scrollTo({ top: 0, behavior: 'smooth' })
+      requestAnimationFrame(handleScroll)
     }
-  }
+  },
 )
+
+watch(isMenuOpen, (open) => {
+  if (import.meta.client) {
+    document.body.style.overflow = open ? 'hidden' : ''
+  }
+})
+
+onUnmounted(() => {
+  if (import.meta.client) {
+    document.body.style.overflow = ''
+  }
+})
 </script>
 
 <template>
   <div>
     <header
       :class="[
-        'fixed top-0 left-0 right-0 z-50 transition-all duration-100',
-        solidHeader ? 'bg-white/95 backdrop-blur-md shadow-sm' : 'bg-transparent',
+        'fixed inset-x-0 top-0 z-50 transition-all duration-500',
+        isScrolled || isMenuOpen
+          ? 'border-b border-line/80 bg-paper/85 backdrop-blur-xl'
+          : 'border-b border-transparent bg-transparent',
       ]"
     >
-      <div class="w-full px-6 lg:px-12">
-        <div class="flex h-16 w-full items-center gap-3 lg:h-20">
-          <div class="flex min-w-0 flex-1 justify-start">
-            <NuxtLink
-              to="/contacts"
+      <div class="container-x flex h-[72px] items-center justify-between">
+        <NuxtLink to="/" class="group flex items-center gap-3">
+          <img
+            src="/images/logo-mark.png"
+            alt="IM"
+            class="h-9 w-9 rounded-[10px] transition-transform duration-500 group-hover:rotate-[-6deg]"
+          />
+          <span class="flex flex-col leading-none">
+            <span
               :class="[
-                'text-sm font-medium tracking-wider uppercase transition-colors duration-200 hover:text-olivine-500',
-                solidHeader ? 'text-gray-900' : 'text-white',
+                'text-[15px] font-semibold tracking-tight transition-colors',
+                lightNav ? 'text-white' : 'text-ink',
               ]"
             >
-              КОНТАКТЫ
-            </NuxtLink>
-          </div>
+              Иван Мамонов
+            </span>
+            <span
+              :class="[
+                'mt-1 text-[10px] font-medium uppercase tracking-[0.24em] transition-colors',
+                lightNav ? 'text-white/65' : 'text-muted-foreground',
+              ]"
+            >
+              Пейзажный фотограф
+            </span>
+          </span>
+        </NuxtLink>
 
+        <nav class="hidden items-center gap-8 lg:flex">
           <NuxtLink
-            to="/"
-            class="flex shrink-0 items-center justify-center rounded-sm outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-olivine-400/80 focus-visible:ring-offset-2"
-            aria-label="На главную"
-          >
-            <img
-              src="/logo.png"
-              alt="Иван Мамонов"
-              width="160"
-              height="48"
-              class="h-9 w-auto max-h-10 object-contain object-center transition-[filter] duration-100 ease-out sm:h-10 lg:max-h-11"
-              :class="
-                solidHeader
-                  ? ''
-                  : 'drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)]'
-              "
-              :style="
-                solidHeader
-                  ? {
-                      filter:
-                        'brightness(0.84) contrast(1.08) saturate(1.16)',
-                    }
-                  : undefined
-              "
-            />
-          </NuxtLink>
-
-          <div class="flex min-w-0 flex-1 justify-end">
-          <button
-            type="button"
+            v-for="item in navItems"
+            :key="item.to"
+            :to="item.to"
             :class="[
-              'group flex items-center gap-3 text-sm font-medium tracking-wider uppercase transition-colors duration-200 rounded-lg px-2 py-1.5 -my-1 -mr-1',
-              solidHeader
-                ? 'text-gray-900 hover:text-olivine-600'
-                : 'text-white hover:text-olivine-200',
+              'link-underline pb-0.5 text-[13.5px] font-medium transition-colors',
+              lightNav
+                ? navActive(item.to)
+                  ? 'text-sand'
+                  : 'text-white/85 hover:text-white'
+                : navActive(item.to)
+                  ? 'text-moss'
+                  : 'text-ink-soft hover:text-ink',
             ]"
-            :aria-expanded="isMenuOpen"
-            aria-controls="site-nav-overlay"
-            @click="isMenuOpen = !isMenuOpen"
-          >
-            <span>МЕНЮ</span>
-            <div class="relative w-6 h-5 flex flex-col justify-between" aria-hidden="true">
-              <span
-                :class="[
-                  'block h-0.5 w-full transition-all duration-100 origin-center',
-                  barLineClass,
-                  isMenuOpen ? 'rotate-45 translate-y-2' : '',
-                ]"
-              />
-              <span
-                :class="[
-                  'block h-0.5 transition-all duration-100',
-                  barLineClass,
-                  isMenuOpen ? 'opacity-0 w-0' : 'w-full',
-                ]"
-              />
-              <span
-                :class="[
-                  'block h-0.5 w-full transition-all duration-100 origin-center',
-                  barLineClass,
-                  isMenuOpen ? '-rotate-45 -translate-y-2' : '',
-                ]"
-              />
-            </div>
-          </button>
-          </div>
-        </div>
-      </div>
-    </header>
-
-    <div
-      id="site-nav-overlay"
-      :class="[
-        'fixed inset-0 z-40 bg-white transition-all duration-500',
-        isMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
-      ]"
-    >
-      <div class="flex flex-col items-center justify-center h-full">
-        <nav class="flex flex-col items-center gap-6 lg:gap-8">
-          <NuxtLink
-            v-for="(item, index) in navItems"
-            :key="item.id"
-            :to="item.id"
-            :class="[
-              'text-3xl lg:text-5xl font-bold tracking-wider uppercase transition-all duration-100 hover:text-olivine-500',
-              navActive(item.id) ? 'text-olivine-500' : 'text-gray-900',
-            ]"
-            :style="{
-              opacity: isMenuOpen ? 1 : 0,
-              transform: isMenuOpen ? 'translateX(0)' : 'translateX(50px)',
-              transition: `all 0.4s ease-in-out(0.4, 0, 0.2, 1) ${isMenuOpen ? index * 0.05 + 0.2 : 0}s`,
-            }"
-            @click="isMenuOpen = false"
           >
             {{ item.label }}
           </NuxtLink>
+          <NuxtLink
+            to="/contacts"
+            :class="[
+              'group inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-medium transition-colors',
+              lightNav
+                ? 'bg-white text-ink hover:bg-moss hover:text-white'
+                : 'bg-ink text-paper hover:bg-moss',
+            ]"
+          >
+            Связаться
+            <ArrowUpRight
+              class="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+            />
+          </NuxtLink>
         </nav>
+
+        <button
+          type="button"
+          :class="[
+            'flex h-10 w-10 items-center justify-center rounded-full border transition-colors lg:hidden',
+            lightNav
+              ? 'border-white/30 bg-white/15 text-white'
+              : 'border-line bg-white/70 text-ink',
+          ]"
+          aria-label="Меню"
+          :aria-expanded="isMenuOpen"
+          @click="isMenuOpen = !isMenuOpen"
+        >
+          <X v-if="isMenuOpen" class="h-5 w-5" />
+          <Menu v-else class="h-5 w-5" />
+        </button>
       </div>
-    </div>
+    </header>
+
+    <Transition
+      enter-active-class="transition-opacity duration-300"
+      leave-active-class="transition-opacity duration-300"
+      enter-from-class="opacity-0"
+      leave-to-class="opacity-0"
+    >
+      <div
+        v-if="isMenuOpen"
+        class="fixed inset-0 z-40 bg-paper/98 backdrop-blur-sm lg:hidden"
+      >
+        <div class="container-x flex h-full flex-col justify-center gap-2 pt-16">
+          <NuxtLink
+            v-for="(item, i) in navItems"
+            :key="item.to"
+            :to="item.to"
+            :class="[
+              'group flex items-center justify-between border-b border-line py-5 transition-all duration-500',
+              navActive(item.to) ? 'text-moss' : 'text-ink',
+            ]"
+            :style="{ transitionDelay: `${0.06 * i}s` }"
+            @click="isMenuOpen = false"
+          >
+            <span class="font-display text-3xl font-medium">{{ item.label }}</span>
+            <ArrowUpRight
+              class="h-6 w-6 text-muted-foreground transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1"
+            />
+          </NuxtLink>
+          <p class="mt-8 text-sm text-muted-foreground">
+            Пейзажный фотограф · Владивосток, Приморский край
+          </p>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
