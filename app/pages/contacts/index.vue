@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Camera, Mail, MapPin, Phone, Play, Send } from '@lucide/vue'
+import { Camera, Mail, MapPin, Music2, Phone, Play, Send } from '@lucide/vue'
 import { defaultSiteContacts, loadSiteContacts } from '~/composables/useSiteContent'
 
 definePageMeta({
@@ -45,11 +45,16 @@ watch(
   { immediate: true },
 )
 
+const visibleSocialLinks = computed(() =>
+  site.value.social_links.filter((link) => link.is_visible !== false),
+)
+
 const socialIcon = (platform: string) => {
   const p = platform.toLowerCase()
   if (p.includes('telegram')) return Send
   if (p.includes('instagram')) return Camera
   if (p.includes('youtube')) return Play
+  if (p.includes('tiktok')) return Music2
   return Mail
 }
 </script>
@@ -148,7 +153,7 @@ const socialIcon = (platform: string) => {
             </Reveal>
           </div>
 
-          <Reveal v-if="site.social_links.length" :delay="0.15">
+          <Reveal v-if="visibleSocialLinks.length" :delay="0.15">
             <p
               class="mt-10 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
             >
@@ -156,7 +161,7 @@ const socialIcon = (platform: string) => {
             </p>
             <div class="mt-4 flex flex-wrap gap-3">
               <a
-                v-for="(link, i) in site.social_links"
+                v-for="(link, i) in visibleSocialLinks"
                 :key="i"
                 :href="link.url"
                 target="_blank"

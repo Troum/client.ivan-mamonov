@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { AtSign, Camera, Play, Send } from '@lucide/vue'
+import { AtSign, Camera, Music2, Play, Send } from '@lucide/vue'
 import { defaultSiteContacts, loadSiteContacts } from '~/composables/useSiteContent'
 
 const currentYear = new Date().getFullYear()
@@ -17,13 +17,15 @@ const { data } = await useAsyncData('site-contacts', () => loadSiteContacts(), {
 })
 
 const socialLinks = computed(() => {
-  const fromApi = data.value?.social_links ?? []
-  if (fromApi.length) {
-    return fromApi.map((link) => ({
-      label: link.aria_label || link.platform,
-      href: link.url,
-      platform: link.platform.toLowerCase(),
-    }))
+  const fromApi = data.value?.social_links
+  if (Array.isArray(fromApi) && fromApi.length) {
+    return fromApi
+      .filter((link) => link.is_visible !== false)
+      .map((link) => ({
+        label: link.aria_label || link.platform,
+        href: link.url,
+        platform: link.platform.toLowerCase(),
+      }))
   }
   return [
     { label: 'Telegram', href: 'https://t.me/ivanmamonov', platform: 'telegram' },
@@ -41,6 +43,7 @@ function socialIcon(platform: string) {
   if (platform.includes('telegram') || platform.includes('send')) return Send
   if (platform.includes('instagram') || platform.includes('camera')) return Camera
   if (platform.includes('youtube')) return Play
+  if (platform.includes('tiktok')) return Music2
   return AtSign
 }
 </script>
@@ -100,7 +103,7 @@ function socialIcon(platform: string) {
           </ul>
         </div>
 
-        <div>
+        <div v-if="socialLinks.length">
           <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-paper/40">
             Социальные сети
           </p>

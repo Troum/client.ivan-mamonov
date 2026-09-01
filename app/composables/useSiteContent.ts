@@ -54,7 +54,7 @@ export interface SiteContactsContent {
   phone_href: string
   location: string
   feedback_themes: { value: number; label: string }[]
-  social_links: { platform: string; url: string; aria_label?: string | null }[]
+  social_links: { platform: string; url: string; aria_label?: string | null; is_visible?: boolean }[]
   seo: SiteSeo
 }
 
@@ -145,8 +145,8 @@ export function defaultSiteContacts(): SiteContactsContent {
       { value: 5, label: 'Иные вопросы' },
     ],
     social_links: [
-      { platform: 'instagram', url: 'https://instagram.com', aria_label: 'Instagram' },
-      { platform: 'telegram', url: 'https://telegram.org', aria_label: 'Telegram' },
+      { platform: 'instagram', url: 'https://instagram.com', aria_label: 'Instagram', is_visible: true },
+      { platform: 'telegram', url: 'https://telegram.org', aria_label: 'Telegram', is_visible: true },
     ],
     seo: mergeSeo({
       meta_title: 'Контакты — Иван Мамонов',
