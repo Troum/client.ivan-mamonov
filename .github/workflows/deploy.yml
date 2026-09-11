@@ -16,15 +16,15 @@ jobs:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.DEPLOY_HOST }}
+          host: 185.137.233.44
           username: ${{ secrets.DEPLOY_USER }}
           password: ${{ secrets.DEPLOY_PASSWORD }}
           script: |
             export NVM_DIR="/root/.nvm"
             source "$NVM_DIR/nvm.sh"
             nvm use 20
-            cd /var/www/ivanmamonov.online
-            git pull origin main
+            cd /var/www/side-projects/ivanmamonov.online
+            GIT_SSH_COMMAND='ssh -i /root/.ssh/ivanmamonov_github -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new' git pull origin main
             npm ci && npm run build
             pm2 restart ecosystem.config.cjs
             echo "Ivan Mamonov Client deployment complete!"
