@@ -18,7 +18,7 @@ jobs:
         with:
           host: 185.137.233.44
           username: ${{ secrets.DEPLOY_USER }}
-          password: ${{ secrets.DEPLOY_PASSWORD }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
             export NVM_DIR="/root/.nvm"
             source "$NVM_DIR/nvm.sh"
